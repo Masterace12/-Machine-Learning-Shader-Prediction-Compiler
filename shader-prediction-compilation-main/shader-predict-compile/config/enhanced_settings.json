@@ -1,0 +1,163 @@
+{
+  "version": "2.0.0",
+  "description": "Enhanced Shader Predictive Compiler - 2025 Gaming Mode Edition",
+  
+  "service_config": {
+    "max_cpu_usage": 50.0,
+    "max_memory_mb": 2048,
+    "check_interval": 300,
+    "auto_compile_threshold": 3,
+    "background_priority": true,
+    "thermal_throttling": true,
+    "battery_aware": true
+  },
+  
+  "realtime_monitoring": {
+    "enabled": true,
+    "sample_rate_hz": 60,
+    "monitoring_overhead_target": 0.1,
+    "metrics_history_minutes": 5,
+    "enable_gaming_mode_detection": true,
+    "hardware_counter_access": true
+  },
+  
+  "radv_optimizations": {
+    "enabled": true,
+    "apply_global_optimizations": true,
+    "force_recompilation_on_errors": true,
+    "known_game_fixes": true,
+    "steam_deck_specific": {
+      "perftest_flags": ["aco", "nggc"],
+      "enable_rt_for_oled": true,
+      "device_select": "1002:163f",
+      "compression_enabled": true
+    }
+  },
+  
+  "power_management": {
+    "enabled": true,
+    "adaptive_profiles": true,
+    "profiles": {
+      "battery_save": {
+        "tdp_limit": 4,
+        "cpu_max_freq": 1600,
+        "shader_compile_threads": 2,
+        "background_priority": 19
+      },
+      "handheld_gaming": {
+        "tdp_limit": 12,
+        "cpu_max_freq": 2800,
+        "shader_compile_threads": 4,
+        "background_priority": 5
+      },
+      "docked_gaming": {
+        "tdp_limit": 15,
+        "cpu_max_freq": 3500,
+        "shader_compile_threads": 8,
+        "background_priority": -5
+      }
+    },
+    "thermal_limits": {
+      "cpu_temp_limit": 85,
+      "gpu_temp_limit": 90,
+      "apu_temp_limit": 95,
+      "fan_rpm_limit": 4000
+    },
+    "battery_thresholds": {
+      "critical_level": 10,
+      "low_level": 20,
+      "moderate_level": 40,
+      "max_discharge_rate": 20,
+      "max_battery_temp": 45
+    }
+  },
+  
+  "cache_management": {
+    "enabled": true,
+    "steamos_integration": true,
+    "automatic_cleanup": true,
+    "limits": {
+      "max_total_size_gb": 4.0,
+      "max_age_days": 30,
+      "cleanup_threshold": 0.8,
+      "min_hit_count": 2
+    },
+    "optimizations": {
+      "compression_enabled": true,
+      "single_file_format": true,
+      "deduplication": true,
+      "fossilize_optimization": true
+    },
+    "transcoded_videos": {
+      "enabled": true,
+      "proton_games_only": true
+    }
+  },
+  
+  "thermal_battery_awareness": {
+    "enabled": true,
+    "enhanced_monitoring": true,
+    "multiple_sensors": true,
+    "handheld_mode_optimization": true,
+    "thermal_throttling_detection": true,
+    "battery_health_monitoring": true,
+    "power_draw_tracking": true,
+    "time_estimates": true
+  },
+  
+  "gaming_mode_features": {
+    "enabled": true,
+    "gamescope_detection": true,
+    "game_process_monitoring": true,
+    "adaptive_compilation": true,
+    "minimal_overlay_impact": true,
+    "per_game_profiles": true,
+    "automatic_pause_on_gaming": true
+  },
+  
+  "compilation_strategies": {
+    "adaptive_parallelism": true,
+    "thermal_adaptation": true,
+    "battery_adaptation": true,
+    "gaming_mode_adaptation": true,
+    "memory_pressure_adaptation": true,
+    "priority_multipliers": {
+      "high_performance": 1.5,
+      "balanced": 1.0,
+      "battery_save": 0.5
+    }
+  },
+  
+  "steam_deck_specific": {
+    "model_detection": true,
+    "lcd_optimizations": {
+      "conservative_power": true,
+      "4_thread_limit": true,
+      "thermal_aware": true
+    },
+    "oled_optimizations": {
+      "enhanced_gpu": true,
+      "6_thread_capable": true,
+      "variable_rate_shading": true,
+      "ray_tracing_hints": true
+    }
+  },
+  
+  "logging": {
+    "level": "INFO",
+    "file_rotation": true,
+    "max_size_mb": 10,
+    "backup_count": 5,
+    "performance_metrics": true,
+    "thermal_logging": true,
+    "power_logging": true
+  },
+  
+  "compatibility": {
+    "steamos_version_check": true,
+    "vulkan_validation": true,
+    "fossilize_integration": true,
+    "mesa_optimization": true,
+    "proton_compatibility": true
+  }
+}
