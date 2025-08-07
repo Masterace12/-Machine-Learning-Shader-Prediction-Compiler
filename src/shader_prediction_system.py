@@ -26,6 +26,11 @@ try:
     import torch
     import torch.nn as nn
     TORCH_AVAILABLE = True
+    # Check if CUDA/ROCm is available for Steam Deck GPU acceleration
+    if torch.cuda.is_available():
+        print("GPU acceleration available via CUDA/ROCm")
+    else:
+        print("Using CPU inference (GPU acceleration not available)")
 except ImportError:
     TORCH_AVAILABLE = False
     print("PyTorch not available, using sklearn models only")
@@ -42,12 +47,13 @@ class ShaderType(Enum):
 
 
 class ThermalState(Enum):
-    """Steam Deck thermal states"""
-    COOL = "cool"  # < 60°C
-    NORMAL = "normal"  # 60-75°C
-    WARM = "warm"  # 75-85°C
-    HOT = "hot"  # > 85°C
+    """Steam Deck thermal states - Updated based on research"""
+    COOL = "cool"  # < 65°C
+    NORMAL = "normal"  # 65-80°C  
+    WARM = "warm"  # 80-85°C
+    HOT = "hot"  # 85-90°C
     THROTTLING = "throttling"  # > 90°C
+    CRITICAL = "critical"  # > 95°C (APU junction limit)
 
 
 @dataclass
@@ -123,30 +129,42 @@ class ShaderCompilationPredictor:
         self.model_version = "1.0.0"
         
     def _initialize_models(self):
-        """Initialize ML models based on Steam Deck constraints"""
+        """Initialize ML models optimized for Steam Deck constraints"""
         if self.model_type == "ensemble":
-            # Ensemble of lightweight models for better accuracy
+            # Optimized ensemble for Steam Deck (4-core AMD Zen 2)
             self.models['rf'] = RandomForestRegressor(
-                n_estimators=50,  # Limited for performance
-                max_depth=10,
+                n_estimators=30,  # Reduced for faster inference
+                max_depth=8,      # Reduced depth for efficiency
                 min_samples_split=5,
-                n_jobs=2  # Steam Deck has 4 cores, use half for ML
+                min_samples_leaf=2,
+                max_features='sqrt',  # Feature subsampling for speed
+                n_jobs=2,  # Conservative thread usage
+                random_state=42
             )
             self.models['gb'] = GradientBoostingRegressor(
-                n_estimators=50,
-                max_depth=5,
-                learning_rate=0.1,
-                subsample=0.8
+                n_estimators=40,  # Reduced from 50
+                max_depth=4,      # Reduced from 5
+                learning_rate=0.15,  # Slightly higher for faster convergence
+                subsample=0.8,
+                random_state=42
             )
         elif self.model_type == "lightweight":
-            # Single lightweight model for minimal overhead
-            self.models['main'] = RandomForestRegressor(
-                n_estimators=30,
-                max_depth=8,
-                n_jobs=1
+            # Ultra-lightweight single model for minimal resource usage
+            from sklearn.ensemble import ExtraTreesRegressor
+            self.models['main'] = ExtraTreesRegressor(
+                n_estimators=20,  # Very fast ensemble
+                max_depth=6,
+                min_samples_split=10,
+                n_jobs=1,  # Single thread for minimal impact
+                random_state=42
             )
         elif self.model_type == "neural" and TORCH_AVAILABLE:
+            # Neural network with Steam Deck GPU optimization
             self.models['nn'] = ShaderNeuralNetwork()
+            # Set device based on availability
+            if torch.cuda.is_available():
+                self.models['nn'] = self.models['nn'].cuda()
+                print("Neural network using GPU acceleration")
             
     def train(self, shader_metrics: List[ShaderMetrics], 
               validation_split: float = 0.2) -> Dict[str, float]:
@@ -329,22 +347,24 @@ class ThermalAwareScheduler:
         self.priority_queue = []  # High priority compilations
         self.thermal_history = deque(maxlen=60)  # 60 second window
         
-        # Thermal state thresholds
+        # Updated thermal state thresholds based on Steam Deck research
         self.thermal_thresholds = {
-            ThermalState.COOL: (0, 60),
-            ThermalState.NORMAL: (60, 75),
-            ThermalState.WARM: (75, 85),
+            ThermalState.COOL: (0, 65),
+            ThermalState.NORMAL: (65, 80),
+            ThermalState.WARM: (80, 85),
             ThermalState.HOT: (85, 90),
-            ThermalState.THROTTLING: (90, float('inf'))
+            ThermalState.THROTTLING: (90, 95),
+            ThermalState.CRITICAL: (95, float('inf'))
         }
         
-        # Compilation slots per thermal state
+        # Compilation slots per thermal state (optimized for Steam Deck)
         self.compilation_slots = {
-            ThermalState.COOL: 4,
-            ThermalState.NORMAL: 3,
-            ThermalState.WARM: 2,
-            ThermalState.HOT: 1,
-            ThermalState.THROTTLING: 0
+            ThermalState.COOL: 4,        # Full compilation capacity
+            ThermalState.NORMAL: 3,      # Slight reduction
+            ThermalState.WARM: 2,        # Half capacity
+            ThermalState.HOT: 1,         # Minimal compilation
+            ThermalState.THROTTLING: 0,  # Stop all compilation
+            ThermalState.CRITICAL: 0     # Emergency stop
         }
         
     def update_thermal_state(self, temp: float, power: float):
