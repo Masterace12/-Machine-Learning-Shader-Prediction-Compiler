@@ -1,0 +1,133 @@
+{
+  "system": {
+    "name": "Steam Deck Shader Prediction System",
+    "version": "1.1.0",
+    "optimized_for": "steam_deck"
+  },
+  "hardware_detection": {
+    "auto_detect_model": true,
+    "fallback_model": "LCD",
+    "detect_gaming_mode": true,
+    "monitor_thermal_state": true,
+    "monitor_battery_state": true
+  },
+  "compilation": {
+    "LCD": {
+      "max_parallel_threads": 4,
+      "memory_limit_mb": 2048,
+      "cpu_affinity": [0, 1, 2, 3],
+      "power_profile": "power_save",
+      "thermal_limits": {
+        "cpu_max": 85.0,
+        "gpu_max": 90.0,
+        "apu_max": 95.0
+      }
+    },
+    "OLED": {
+      "max_parallel_threads": 6,
+      "memory_limit_mb": 2560,
+      "cpu_affinity": [0, 1, 2, 3],
+      "power_profile": "balanced_performance",
+      "thermal_limits": {
+        "cpu_max": 87.0,
+        "gpu_max": 92.0,
+        "apu_max": 97.0
+      },
+      "enable_rdna3_features": true,
+      "enable_variable_rate_shading": true
+    }
+  },
+  "ml_models": {
+    "default_type": "ensemble",
+    "cache_size": 2000,
+    "prediction_timeout_ms": 50,
+    "training_interval": 1000,
+    "min_training_samples": 500,
+    "use_gpu_acceleration": true,
+    "model_configs": {
+      "ensemble": {
+        "random_forest": {
+          "n_estimators": 30,
+          "max_depth": 8,
+          "n_jobs": 2
+        },
+        "gradient_boost": {
+          "n_estimators": 40,
+          "max_depth": 4,
+          "learning_rate": 0.15
+        }
+      },
+      "lightweight": {
+        "extra_trees": {
+          "n_estimators": 20,
+          "max_depth": 6,
+          "n_jobs": 1
+        }
+      }
+    }
+  },
+  "thermal_management": {
+    "enable_thermal_throttling": true,
+    "thermal_states": {
+      "cool": {"temp_max": 65, "compilation_slots": 4},
+      "normal": {"temp_max": 80, "compilation_slots": 3},
+      "warm": {"temp_max": 85, "compilation_slots": 2},
+      "hot": {"temp_max": 90, "compilation_slots": 1},
+      "throttling": {"temp_max": 95, "compilation_slots": 0},
+      "critical": {"temp_max": 999, "compilation_slots": 0}
+    },
+    "fan_curve_integration": true,
+    "power_limit_awareness": true
+  },
+  "battery_optimization": {
+    "enable_battery_awareness": true,
+    "critical_level": 10,
+    "low_level": 20,
+    "moderate_level": 40,
+    "high_discharge_threshold_w": 15,
+    "battery_temp_limit": 45,
+    "docked_mode_detection": true
+  },
+  "gaming_mode": {
+    "detect_gamescope": true,
+    "reduce_background_compilation": true,
+    "prioritize_essential_shaders": true,
+    "defer_heavy_compilation": true,
+    "respect_game_fps_target": true
+  },
+  "caching": {
+    "enable_disk_cache": true,
+    "cache_size_mb": 1024,
+    "cleanup_threshold": 0.8,
+    "use_fossilize_integration": true,
+    "cache_compression": true,
+    "memory_mapped_cache": true
+  },
+  "radv_optimizations": {
+    "enable_aco_backend": true,
+    "enable_nggc": true,
+    "enable_sam": true,
+    "disable_compute_debug": true,
+    "use_single_file_cache": true,
+    "environment_variables": {
+      "RADV_PERFTEST": "aco,nggc,sam",
+      "RADV_DEBUG": "noshaderdb,nocompute",
+      "MESA_VK_DEVICE_SELECT": "1002:163f",
+      "RADV_LOWER_DISCARD_TO_DEMOTE": "1"
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "log_thermal_data": true,
+    "log_performance_metrics": true,
+    "log_compilation_times": true,
+    "max_log_size_mb": 100,
+    "rotate_logs": true
+  },
+  "security": {
+    "validate_spir_v": true,
+    "check_anticheat_compatibility": true,
+    "sandbox_shader_compilation": false,
+    "enable_secure_cache": true
+  }
+}

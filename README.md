@@ -16,10 +16,13 @@
 Copy and paste this command into **Konsole** on your Steam Deck:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/enhanced-install.sh | bash
 ```
 
+**🔧 Having PGP signature issues?** This enhanced installer automatically fixes them!
+
 **That's it!** The installer automatically:
+- ✅ **Fixes PGP signature verification issues** automatically
 - ✅ Detects Steam Deck model (LCD/OLED) and optimizes accordingly
 - ✅ Downloads and installs all dependencies 
 - ✅ Configures ML models for your hardware
@@ -124,23 +127,40 @@ The system automatically detects and optimizes for your specific Steam Deck mode
 
 ## 🛠️ **Alternative Installation Methods**
 
+### **Enhanced Local Installer (Recommended for Issues)**
+```bash
+# Download and inspect the enhanced installer
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/enhanced-install.sh -o enhanced-install.sh
+chmod +x enhanced-install.sh
+./enhanced-install.sh
+```
+
 ### **Git Clone Method**
 ```bash
 git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler.git
 cd -Machine-Learning-Shader-Prediction-Compiler
-chmod +x optimized-install.sh
-./optimized-install.sh
+chmod +x enhanced-install.sh
+./enhanced-install.sh
 ```
 
 ### **Manual Installation**
 1. Download the [latest release](https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/releases)
 2. Extract the ZIP file
 3. Open Konsole and navigate to the extracted folder
-4. Run: `bash optimized-install.sh`
+4. Run: `bash enhanced-install.sh`
 
 ### **Development Installation**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash -s -- --dev
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/enhanced-install.sh | bash -s -- --dev
+```
+
+### **Python Virtual Environment Only**
+```bash
+# For users without sudo access or persistent PGP issues
+python3 -m venv ~/shader-predict-env
+source ~/shader-predict-env/bin/activate
+pip install numpy scikit-learn pandas psutil requests PyYAML
+# See INSTALLATION_METHODS.md for complete instructions
 ```
 
 ---
@@ -295,7 +315,46 @@ shader-predict-compile --export-csv ~/shader_performance.csv
 
 ## 🔍 **Troubleshooting**
 
-### **Common Issues & Solutions**
+### **🚨 Installation Issues**
+
+#### **PGP Signature Verification Failures**
+**Error**: `invalid or corrupted package (PGP signature)`
+
+**Quick Fix:**
+```bash
+# Use our enhanced installer that automatically fixes PGP issues
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/enhanced-install.sh | bash
+```
+
+**Manual Fix:**
+```bash
+# Clear package cache and reinitialize keyring
+sudo pacman -Scc --noconfirm
+sudo rm -rf /etc/pacman.d/gnupg
+sudo pacman-key --init
+sudo pacman-key --populate archlinux steamos
+sudo pacman-key --refresh-keys
+sudo pacman -Sy
+```
+
+**📖 See detailed guide**: [TROUBLESHOOTING_PGP.md](TROUBLESHOOTING_PGP.md)
+
+#### **Dependency Installation Problems**
+```bash
+# Run enhanced dependency installer
+cd shader-predict-compile
+chmod +x install_dependencies.sh
+./install_dependencies.sh
+
+# OR use Python virtual environment approach
+python3 -m venv ~/shader-predict-env
+source ~/shader-predict-env/bin/activate
+pip install -r requirements.txt
+```
+
+**📖 Multiple installation methods**: [INSTALLATION_METHODS.md](INSTALLATION_METHODS.md)
+
+### **🔧 Runtime Issues**
 
 #### **Service Won't Start**
 ```bash
@@ -307,6 +366,9 @@ shader-predict-compile --export-csv ~/shader_performance.csv
 
 # Check logs for errors
 journalctl --user -u shader-predict-compile --no-pager
+
+# Try manual start for debugging
+shader-predict-compile --debug
 ```
 
 #### **High CPU Usage**
