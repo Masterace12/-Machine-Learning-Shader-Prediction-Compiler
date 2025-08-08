@@ -903,7 +903,11 @@ class SteamDeckShaderPredictor:
     """
     
     def __init__(self, config: Optional[Dict] = None):
-        self.config = config or self._default_config()
+        # Merge provided config with defaults to ensure all required keys exist
+        default_config = self._default_config()
+        if config:
+            default_config.update(config)
+        self.config = default_config
         
         # Initialize components
         self.predictor = ShaderCompilationPredictor(

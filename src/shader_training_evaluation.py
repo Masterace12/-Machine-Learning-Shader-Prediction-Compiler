@@ -317,7 +317,7 @@ class ModelEvaluator:
         # Make predictions
         for metrics in test_data:
             start_time = time.time()
-            pred, conf = predictor.predict(metrics)
+            pred, conf = predictor.predictor.predict(metrics)
             prediction_time = (time.time() - start_time) * 1000  # ms
             
             y_pred.append(pred)
@@ -522,8 +522,8 @@ class TrainingManager:
             shuffled_data = training_data.copy()
             np.random.shuffle(shuffled_data)
             
-            # Train model
-            train_results = predictor.train(shuffled_data, validation_split)
+            # Train model - use the underlying predictor component
+            train_results = predictor.predictor.train(shuffled_data, validation_split)
             
             # Evaluate on held-out test set
             split_idx = int(len(shuffled_data) * (1 - validation_split))

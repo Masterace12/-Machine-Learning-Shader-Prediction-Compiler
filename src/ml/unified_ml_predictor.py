@@ -43,6 +43,7 @@ try:
     from sklearn.preprocessing import StandardScaler, LabelEncoder
     from sklearn.model_selection import train_test_split, cross_val_score
     from sklearn.metrics import mean_absolute_error, accuracy_score, classification_report
+    from sklearn.exceptions import NotFittedError
     import joblib
     HAS_SKLEARN = True
 except ImportError:
@@ -389,40 +390,56 @@ class UnifiedMLPredictor:
             self.cache_misses += 1
         
         # Use ML model if available and trained
-        if HAS_SKLEARN and self.compilation_time_model and hasattr(self.compilation_time_model, 'feature_importances_'):
+        if HAS_SKLEARN and self.compilation_time_model is not None:
             try:
-                feature_vector = features.to_feature_vector().reshape(1, -1)
-                if self.scaler:
-                    feature_vector = self.scaler.transform(feature_vector)
-                
-                prediction = self.compilation_time_model.predict(feature_vector)[0]
-                
-                # Cache prediction
-                if use_cache:
-                    self.prediction_cache[cache_key] = {
-                        'time': prediction,
-                        'timestamp': time.time()
-                    }
-                
-                return max(1.0, prediction)  # Ensure positive prediction
-            except Exception as e:
-                self.logger.warning(f"ML prediction failed, using heuristic: {e}")
+                # Check if model is fitted by attempting to access a fitted attribute
+                _ = self.compilation_time_model.n_estimators
+                fitted = True
+            except (AttributeError, NotFittedError):
+                fitted = False
+            
+            if fitted:
+                try:
+                    feature_vector = features.to_feature_vector().reshape(1, -1)
+                    if self.scaler:
+                        feature_vector = self.scaler.transform(feature_vector)
+                    
+                    prediction = self.compilation_time_model.predict(feature_vector)[0]
+                    
+                    # Cache prediction
+                    if use_cache:
+                        self.prediction_cache[cache_key] = {
+                            'time': prediction,
+                            'timestamp': time.time()
+                        }
+                    
+                    return max(1.0, prediction)  # Ensure positive prediction
+                except Exception as e:
+                    self.logger.warning(f"ML prediction failed, using heuristic: {e}")
         
         # Fallback to heuristic predictor
         return self.heuristic_predictor.predict_compilation_time(features)
     
     def predict_success_probability(self, features: UnifiedShaderFeatures) -> float:
         """Predict shader compilation success probability"""
-        if HAS_SKLEARN and self.success_model and hasattr(self.success_model, 'feature_importances_'):
+        if HAS_SKLEARN and self.success_model is not None:
             try:
-                feature_vector = features.to_feature_vector().reshape(1, -1)
-                if self.scaler:
-                    feature_vector = self.scaler.transform(feature_vector)
-                
-                probability = self.success_model.predict_proba(feature_vector)[0][1]
-                return probability
-            except Exception as e:
-                self.logger.warning(f"ML success prediction failed, using heuristic: {e}")
+                # Check if model is fitted
+                _ = self.success_model.n_estimators
+                fitted = True
+            except (AttributeError, NotFittedError):
+                fitted = False
+            
+            if fitted:
+                try:
+                    feature_vector = features.to_feature_vector().reshape(1, -1)
+                    if self.scaler:
+                        feature_vector = self.scaler.transform(feature_vector)
+                    
+                    probability = self.success_model.predict_proba(feature_vector)[0][1]
+                    return probability
+                except Exception as e:
+                    self.logger.warning(f"ML success prediction failed, using heuristic: {e}")
         
         # Fallback to heuristic predictor
         return self.heuristic_predictor.predict_success_probability(features)

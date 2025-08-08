@@ -1,0 +1,50 @@
+{
+  "predictor": {
+    "model_type": "ensemble",
+    "cache_size": 2000,
+    "max_temp": 83.0,
+    "power_budget": 12.0,
+    "sequence_length": 100
+  },
+  "thermal_protection": true,
+  "battery_optimization": true,
+  "performance_mode": "balanced",
+  "game_profiles": {
+    "1091500": {
+      "name": "Cyberpunk 2077",
+      "shader_complexity_modifier": 1.3,
+      "thermal_limit": 80.0,
+      "power_budget": 14.0,
+      "cache_size": 3000,
+      "temperature_sensitive": true,
+      "priority_boost": 2
+    },
+    "1245620": {
+      "name": "ELDEN RING",
+      "shader_complexity_modifier": 1.1,
+      "thermal_limit": 83.0,
+      "power_budget": 13.0,
+      "cache_size": 2000,
+      "temperature_sensitive": false,
+      "priority_boost": 1
+    },
+    "620": {
+      "name": "Portal 2",
+      "shader_complexity_modifier": 0.8,
+      "thermal_limit": 85.0,
+      "power_budget": 10.0,
+      "cache_size": 1000,
+      "temperature_sensitive": false,
+      "priority_boost": 0
+    },
+    "1086940": {
+      "name": "Baldur's Gate 3",
+      "shader_complexity_modifier": 1.2,
+      "thermal_limit": 82.0,
+      "power_budget": 13.5,
+      "cache_size": 2500,
+      "temperature_sensitive": true,
+      "priority_boost": 1
+    }
+  }
+}

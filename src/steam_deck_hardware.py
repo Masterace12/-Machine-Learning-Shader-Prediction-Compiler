@@ -528,12 +528,19 @@ class SteamDeckDetector:
     
     def get_model_info(self) -> Dict[str, Any]:
         """Get comprehensive model information"""
+        hardware_dict = None
+        if self.hardware_specs:
+            hardware_dict = dict(self.hardware_specs.__dict__)
+            # Convert enum values to strings for JSON serialization
+            hardware_dict["model"] = hardware_dict["model"].value
+            hardware_dict["generation"] = hardware_dict["generation"].value
+        
         return {
             "detected": self.is_steam_deck(),
             "model": self.detected_model.value,
             "generation": self.detected_generation.value,
             "confidence": self._detection_confidence,
-            "hardware_specs": self.hardware_specs.__dict__ if self.hardware_specs else None,
+            "hardware_specs": hardware_dict,
             "performance_profile": self.performance_profile.__dict__ if self.performance_profile else None
         }
     

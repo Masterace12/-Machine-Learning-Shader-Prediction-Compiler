@@ -60,9 +60,8 @@ class SteamDeckHardwareMonitor:
         
         # Steam Deck specific paths - Updated for latest SteamOS versions
         # These paths may vary based on kernel/drivers, so we'll check multiple options
-        self.sensor_paths = self._discover_sensor_paths()
         
-        # Backup sensor paths to try
+        # Backup sensor paths to try - define before calling _discover_sensor_paths
         self.backup_sensor_paths = {
             'gpu_temp': [
                 '/sys/class/hwmon/hwmon0/temp1_input',  # APU die temp
@@ -86,6 +85,9 @@ class SteamDeckHardwareMonitor:
                 '/sys/devices/platform/asus-nb-wmi/hwmon/hwmon*/fan1_input'
             ]
         }
+        
+        # Now discover actual working sensor paths
+        self.sensor_paths = self._discover_sensor_paths()
         
         # Check if we're running on Steam Deck
         self.is_steam_deck = self._detect_steam_deck()

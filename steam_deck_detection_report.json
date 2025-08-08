@@ -1,0 +1,59 @@
+{
+  "detection_timestamp": "2025-08-08T12:33:10.375162",
+  "detection_results": {
+    "detected": true,
+    "model": "oled_512gb",
+    "generation": "oled",
+    "confidence": 0.8,
+    "hardware_specs": {
+      "model": "oled_512gb",
+      "generation": "oled",
+      "apu_codename": "Sephiroth",
+      "display_size": 7.4,
+      "display_resolution": [
+        1280,
+        800
+      ],
+      "display_refresh_rate": 90,
+      "display_brightness_nits": 1000,
+      "battery_capacity_whr": 50,
+      "memory_speed_mt_s": 6400,
+      "wifi_standard": "Wi-Fi 6E",
+      "weight_grams": 640,
+      "manufacturing_process_nm": 6,
+      "estimated_release_year": 2023
+    },
+    "performance_profile": {
+      "recommended_cache_size_mb": 1536,
+      "max_parallel_jobs": 6,
+      "thermal_limit_celsius": 87,
+      "power_limit_watts": 20,
+      "memory_bandwidth_gb_s": 102.4,
+      "gpu_compute_units": 8,
+      "cpu_cores": 4,
+      "cpu_base_clock_mhz": 2800
+    }
+  },
+  "optimization_settings": {
+    "cache_size_mb": 1536,
+    "parallel_jobs": 6,
+    "thermal_aware": true,
+    "power_aware": true,
+    "memory_bandwidth_optimization": true,
+    "enable_90hz_optimization": true,
+    "oled_power_optimization": true,
+    "wifi6e_p2p_optimization": true,
+    "memory_speed_boost": true
+  },
+  "system_info": {
+    "platform": "linux",
+    "python_version": "3.13.1 (main, Dec  4 2024, 18:05:56) [GCC 14.2.1 20240910]",
+    "architecture": [
+      "Linux",
+      "steamdeck",
+      "6.11.11-valve19-1-neptune-611-g88b36d49a5e3",
+      "#1 SMP PREEMPT_DYNAMIC Tue, 17 Jun 2025 22:22:48 +0000",
+      "x86_64"
+    ]
+  }
+}

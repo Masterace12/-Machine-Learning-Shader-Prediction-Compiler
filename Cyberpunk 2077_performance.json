@@ -1,0 +1,48 @@
+{
+  "system_status": {
+    "running": true,
+    "active_game": "1091500",
+    "hardware": {
+      "gpu_temp": 71.71978793144226,
+      "cpu_temp": 66.58610115051269,
+      "gpu_power": 9.34395758628845,
+      "battery_level": 75.0,
+      "thermal_headroom": 13.280212068557745,
+      "power_headroom": 0,
+      "is_steam_deck": true
+    },
+    "predictor": {
+      "metrics_stats": {
+        "total_compilations": 27,
+        "failed_compilations": 0,
+        "total_compilation_time": 5940.063292685937,
+        "avg_compilation_time": 220.0023441735532,
+        "max_compilation_time": 578.4581167082753,
+        "min_compilation_time": 77.9108300465995
+      },
+      "thermal_state": "normal",
+      "cache_size": 122,
+      "queue_size": 27,
+      "prediction_history_size": 100
+    },
+    "games": {
+      "1091500": {
+        "name": "Cyberpunk 2077",
+        "start_time": 1754675542.7830474,
+        "shader_count": 27,
+        "total_compile_time": 5940.063292685937,
+        "predictions_made": 54,
+        "predictions_accurate": 0,
+        "prediction_accuracy": 0.0,
+        "cache_info": {
+          "status": "available",
+          "path": "/home/deck/.steam/steam/steamapps/shadercache/1091500",
+          "total_size_mb": 210.69711685180664,
+          "file_count": 55,
+          "last_modified": 1754629206.1419451
+        }
+      }
+    }
+  },
+  "hardware_history": [
+    

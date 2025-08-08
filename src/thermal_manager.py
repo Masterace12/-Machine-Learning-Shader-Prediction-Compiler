@@ -434,7 +434,7 @@ class ThermalManager:
                     try:
                         with open(path, 'r') as f:
                             dpm_states = f.read().strip()
-                            for line in dmp_states.split('\n'):
+                            for line in dpm_states.split('\n'):
                                 if '*' in line:  # Current active state
                                     freq_str = line.split(':')[1].strip().rstrip('Mhz')
                                     metrics.gpu_freq = float(freq_str)
