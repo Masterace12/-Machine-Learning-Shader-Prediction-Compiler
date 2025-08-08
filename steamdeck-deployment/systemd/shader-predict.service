@@ -1,0 +1,109 @@
+[Unit]
+Description=Shader Prediction Compiler Service for Steam Deck
+Documentation=https://github.com/YourUsername/shader-prediction-compilation
+After=network-online.target graphical-session.target
+Wants=network-online.target
+PartOf=graphical-session.target
+
+# Dependencies for Steam integration
+After=steam.service
+Wants=steam.service
+
+# Ensure thermal management is available
+After=thermald.service
+Wants=thermald.service
+
+[Service]
+Type=notify
+NotifyAccess=main
+
+# User and permissions - runs as deck user
+User=deck
+Group=deck
+
+# Working directory in user space (immutable filesystem compatible)
+WorkingDirectory=/home/deck/.local/share/shader-predict-compile
+RuntimeDirectory=shader-predict-compile
+StateDirectory=shader-predict-compile
+CacheDirectory=shader-predict-compile
+ConfigurationDirectory=shader-predict-compile
+
+# Environment configuration
+Environment="SHADER_PREDICT_HOME=/home/deck/.local/share/shader-predict-compile"
+Environment="SHADER_PREDICT_CONFIG=/home/deck/.config/shader-predict-compile"
+Environment="SHADER_PREDICT_CACHE=/home/deck/.cache/shader-predict-compile"
+Environment="PYTHON_PATH=/usr/bin/python3"
+Environment="STEAMDECK_MODE=1"
+Environment="THERMAL_AWARE=1"
+Environment="BATTERY_AWARE=1"
+
+# Resource constraints for Steam Deck
+# Memory limit: 500MB to preserve resources for gaming
+MemoryMax=500M
+MemorySwapMax=0
+
+# CPU quota: 10% to minimize impact on games
+CPUQuota=10%
+CPUWeight=10
+
+# I/O priority: low to prevent storage bottlenecks
+IOWeight=10
+IOReadBandwidthMax=/dev/nvme0n1 10M
+IOWriteBandwidthMax=/dev/nvme0n1 5M
+
+# Nice level for lower priority
+Nice=15
+
+# OOM score to be killed first if memory is needed
+OOMScoreAdjust=900
+
+# Security hardening
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/deck/.local/share/shader-predict-compile
+ReadWritePaths=/home/deck/.config/shader-predict-compile
+ReadWritePaths=/home/deck/.cache/shader-predict-compile
+ReadWritePaths=/tmp/shader-predict-compile
+
+# Network access for P2P
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAccounting=yes
+IPAddressAllow=any
+
+# Device access for GPU monitoring
+DeviceAllow=/dev/dri/card0 rw
+DeviceAllow=/dev/dri/renderD128 rw
+DevicePolicy=closed
+SupplementaryGroups=video render
+
+# Capabilities
+CapabilityBoundingSet=CAP_SYS_NICE CAP_IPC_LOCK
+AmbientCapabilities=CAP_SYS_NICE
+
+# Process management
+Restart=on-failure
+RestartSec=30s
+StartLimitInterval=600
+StartLimitBurst=5
+TimeoutStartSec=30s
+TimeoutStopSec=10s
+
+# Watchdog for health monitoring
+WatchdogSec=60s
+
+# Execute the main service with thermal monitoring
+ExecStartPre=/usr/bin/bash -c 'mkdir -p ${SHADER_PREDICT_HOME} ${SHADER_PREDICT_CONFIG} ${SHADER_PREDICT_CACHE}'
+ExecStartPre=/home/deck/.local/share/shader-predict-compile/scripts/check-thermal.sh
+ExecStart=/home/deck/.local/share/shader-predict-compile/scripts/service-wrapper.sh
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/home/deck/.local/share/shader-predict-compile/scripts/graceful-shutdown.sh
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=shader-predict
+
+[Install]
+WantedBy=default.target
+Also=shader-predict-thermal.timer

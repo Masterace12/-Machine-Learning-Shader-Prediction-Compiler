@@ -1,0 +1,43 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Shader Prediction Compiler
+GenericName=Shader Optimizer
+Comment=ML-powered shader prediction and compilation for Steam Deck
+Keywords=shader;gpu;optimization;steam;deck;gaming;compiler;
+
+# Executable and icon
+Exec=shader-predict-gui %U
+Icon=com.shaderpredict.Compiler
+Terminal=false
+
+# Categories for KDE Discover
+Categories=Game;System;Utility;Settings;
+MimeType=application/x-shader;application/x-spirv;
+
+# Actions for quick access
+Actions=Settings;Monitor;Compile;
+
+# Startup notification
+StartupNotify=true
+StartupWMClass=shader-predict-compiler
+
+# Steam Deck specific metadata
+X-KDE-Protocols=file,http,https
+X-Steam-Deck-Compatible=true
+X-Flatpak=com.shaderpredict.Compiler
+
+[Desktop Action Settings]
+Name=Open Settings
+Exec=shader-predict-gui --settings
+Icon=configure
+
+[Desktop Action Monitor]
+Name=System Monitor
+Exec=shader-predict-gui --monitor
+Icon=utilities-system-monitor
+
+[Desktop Action Compile]
+Name=Force Compilation
+Exec=shader-predict-gui --compile-now
+Icon=run-build

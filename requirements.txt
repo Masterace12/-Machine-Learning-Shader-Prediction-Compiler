@@ -1,0 +1,56 @@
+# Steam Deck ML Shader Prediction Compiler - Unified Requirements
+# Compatible version constraints for Steam Deck and general Linux systems
+
+# Core ML and Data Science - Fixed version constraints for stability
+numpy>=1.21.0,<1.25.0
+scikit-learn>=1.1.0,<1.4.0
+pandas>=1.4.0,<2.1.0
+scipy>=1.8.0,<1.12.0
+joblib>=1.1.0,<1.4.0
+
+# Essential System Integration
+psutil>=5.8.0,<6.0.0
+requests>=2.28.0,<3.0.0
+PyYAML>=6.0,<7.0
+
+# Configuration and Logging
+configparser>=5.2.0
+toml>=0.10.2
+
+# Networking and P2P (Steam Deck compatible)
+aiohttp>=3.8.0,<4.0.0
+cryptography>=37.0.0,<42.0.0
+pycryptodome>=3.15.0,<4.0.0
+
+# System Hardware Monitoring (Linux only - Steam Deck specific)
+pyudev>=0.23.0; platform_system=="Linux"
+dbus-python>=1.2.18,<2.0.0; platform_system=="Linux"
+py-cpuinfo>=8.0.0,<10.0.0
+
+# GUI Support (optional for desktop mode)
+PyGObject>=3.36.0; platform_system=="Linux"
+matplotlib>=3.5.0; extra == "visualization"
+seaborn>=0.11.0; extra == "visualization"
+plotly>=5.10.0; extra == "visualization"
+
+# GPU Acceleration (Steam Deck AMD GPU support)
+torch>=1.12.0,<2.1.0; extra == "gpu"
+torchvision>=0.13.0,<0.16.0; extra == "gpu"
+
+# Vulkan and Graphics Dependencies
+vulkan>=1.3.0; extra == "vulkan"
+
+# Development and Testing
+pytest>=7.0.0; extra == "dev"
+pytest-cov>=3.0.0; extra == "dev"
+pytest-asyncio>=0.19.0; extra == "dev"
+black>=22.0.0; extra == "dev"
+flake8>=4.0.0; extra == "dev"
+mypy>=0.950; extra == "dev"
+bandit>=1.7.0; extra == "dev"
+
+# Steam Deck specific optimizations
+# Note: These are bundled with SteamOS and don't need to be installed separately
+# mesa-vulkan-drivers (system package)
+# vulkan-icd-loader (system package)
+# spirv-tools (system package)

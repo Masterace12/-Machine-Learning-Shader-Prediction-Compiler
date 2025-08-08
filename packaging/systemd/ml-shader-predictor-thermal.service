@@ -1,0 +1,56 @@
+[Unit]
+Description=ML Shader Predictor Thermal Management Service
+Documentation=https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler
+After=ml-shader-predictor.service
+Requires=ml-shader-predictor.service
+PartOf=ml-shader-predictor.service
+
+[Service]
+Type=exec
+ExecStart=/opt/shader-predict-compile/launcher.sh --thermal-monitor
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=30
+TimeoutStopSec=15
+
+# User and permissions
+User=%i
+Group=%i
+
+# Security settings (minimal for thermal monitoring)
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=false
+ProtectHostname=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+
+# Required for thermal monitoring on Steam Deck
+ReadOnlyPaths=/sys/class/thermal /sys/class/hwmon /sys/class/power_supply /sys/devices/virtual/dmi /sys/class/dmi
+ReadWritePaths=%h/.config/shader-predict-compile/thermal.log
+
+# Minimal resource limits
+MemoryMax=64M
+CPUQuota=5%
+TasksMax=10
+Nice=15
+IOSchedulingClass=3
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+Environment=ML_SHADER_THERMAL_MONITOR=1
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ml-shader-thermal
+
+[Install]
+WantedBy=ml-shader-predictor.service
