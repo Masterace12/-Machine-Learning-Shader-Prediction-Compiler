@@ -4,13 +4,13 @@
 # Secure, cross-platform installation with comprehensive error handling
 # 
 # Installation Command:
-#   curl -fsSL https://raw.githubusercontent.com/YourUsername/shader-prediction-compilation/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
 #
 # Advanced Installation:
-#   curl -fsSL https://raw.githubusercontent.com/YourUsername/shader-prediction-compilation/main/install.sh | bash -s -- --dev --no-autostart
+#   curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash -s -- --dev --no-autostart
 #
 # For security-conscious users, download and inspect first:
-#   curl -fsSL https://raw.githubusercontent.com/YourUsername/shader-prediction-compilation/main/install.sh -o install.sh
+#   curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh -o install.sh
 #   less install.sh  # Inspect the script
 #   chmod +x install.sh && ./install.sh
 
@@ -28,8 +28,8 @@ main() {
 # ============================================================================
 
 readonly SCRIPT_VERSION="1.2.0"
-readonly REPO_OWNER="YourUsername"
-readonly REPO_NAME="shader-prediction-compilation"
+readonly REPO_OWNER="Masterace12"
+readonly REPO_NAME="-Machine-Learning-Shader-Prediction-Compiler"
 readonly REPO_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}"
 readonly RAW_URL="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main"
 readonly API_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}"
@@ -813,10 +813,10 @@ show_help() {
 Shader Prediction Compiler - GitHub Installer
 
 USAGE:
-    curl -fsSL https://raw.githubusercontent.com/YourUsername/shader-prediction-compilation/main/install.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
     
     # Or with options:
-    curl -fsSL https://raw.githubusercontent.com/YourUsername/shader-prediction-compilation/main/install.sh | bash -s -- [OPTIONS]
+    curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash -s -- [OPTIONS]
 
 OPTIONS:
     --dev, --development    Install development version from main branch
@@ -830,18 +830,18 @@ OPTIONS:
 
 EXAMPLES:
     # Standard installation
-    curl -fsSL https://raw.githubusercontent.com/YourUsername/shader-prediction-compilation/main/install.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
     
     # Development install without autostart
-    curl -fsSL https://raw.githubusercontent.com/YourUsername/shader-prediction-compilation/main/install.sh | bash -s -- --dev --no-autostart
+    curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash -s -- --dev --no-autostart
     
     # Minimal install (no P2P, no ML)
-    curl -fsSL https://raw.githubusercontent.com/YourUsername/shader-prediction-compilation/main/install.sh | bash -s -- --no-p2p --no-ml
+    curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash -s -- --no-p2p --no-ml
 
 SECURITY:
     For security-conscious users, you can download and inspect the script first:
     
-    curl -fsSL https://raw.githubusercontent.com/YourUsername/shader-prediction-compilation/main/install.sh -o install.sh
+    curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh -o install.sh
     less install.sh  # Inspect the script
     chmod +x install.sh && ./install.sh
 
@@ -852,9 +852,9 @@ UNINSTALLATION:
     /opt/shader-predict-compile/uninstall.sh
 
 MORE INFO:
-    Repository: https://github.com/YourUsername/shader-prediction-compilation
-    Issues: https://github.com/YourUsername/shader-prediction-compilation/issues
-    Documentation: https://github.com/YourUsername/shader-prediction-compilation/wiki
+    Repository: https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler
+    Issues: https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/issues
+    Documentation: https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/wiki
 HELP_EOF
 }
 
