@@ -530,33 +530,33 @@ install_python_deps() {
     # Activate virtual environment
     source "$INSTALL_DIR/venv/bin/activate"
     
-    # Create optimized requirements for Steam Deck
+    # Create optimized requirements for Steam Deck with better compatibility
     local req_file="/tmp/requirements_enhanced.txt"
     cat > "$req_file" << 'EOF'
-# Core dependencies (Steam Deck optimized)
-numpy>=1.21.0,<2.0.0
-scikit-learn>=1.1.0,<1.5.0
-pandas>=1.4.0,<2.2.0
-scipy>=1.8.0,<1.12.0
-joblib>=1.1.0,<1.4.0
+# Core dependencies (Steam Deck optimized) - Fixed version constraints
+numpy>=1.19.0
+scikit-learn>=1.0.0
+pandas>=1.3.0
+scipy>=1.7.0
+joblib>=1.0.0
 
-# System integration
-psutil>=5.8.0,<6.0.0
-requests>=2.28.0,<3.0.0
+# System integration - Essential packages
+psutil>=5.7.0
+requests>=2.25.0
 
-# Networking and security
-cryptography>=3.4.8,<42.0.0
-aiohttp>=3.8.0,<4.0.0
+# Networking and security - Relaxed constraints for better compatibility
+cryptography>=3.4.0
+aiohttp>=3.7.0
 
-# Configuration
-PyYAML>=6.0,<7.0.0
+# Configuration - Basic YAML support
+PyYAML>=5.4.0
 
-# Linux-specific packages
-pyudev>=0.23.2,<1.0.0; platform_system=="Linux"
-dbus-python>=1.2.18,<2.0.0; platform_system=="Linux"
+# Linux-specific packages - Steam Deck specific
+pyudev>=0.23.0; platform_system=="Linux"
+dbus-python>=1.2.0; platform_system=="Linux"
 
-# Optional GUI support
-PyGObject>=3.40.0; platform_system=="Linux"
+# Optional GUI support - Only if available
+PyGObject>=3.36.0; platform_system=="Linux"
 EOF
     
     # Multiple installation strategies
@@ -584,13 +584,13 @@ EOF
     if [[ "$install_success" != "true" ]]; then
         log_warning "Standard installation failed, trying individual package installation..."
         
-        # Core packages that are essential
+        # Core packages that are essential - with specific focus on numpy first
         local core_packages=(
-            "numpy>=1.21.0"
-            "scikit-learn>=1.1.0"
-            "psutil>=5.8.0"
-            "requests>=2.28.0"
-            "PyYAML>=6.0"
+            "numpy>=1.19.0"
+            "psutil>=5.7.0" 
+            "requests>=2.25.0"
+            "PyYAML>=5.4.0"
+            "scikit-learn>=1.0.0"
         )
         
         local installed_count=0

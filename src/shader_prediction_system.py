@@ -1,10 +1,23 @@
+#!/usr/bin/env python3
 """
 Steam Deck Shader Prediction System
 Optimized for AMD RDNA2 GPU with thermal and power constraints
 """
 
-import numpy as np
-import pandas as pd
+# Core imports with error handling
+try:
+    import numpy as np
+except ImportError:
+    print("ERROR: NumPy not installed. Please run: pip install numpy>=1.19.0")
+    print("Or use the fix script: ./fix-numpy-issue.sh")
+    exit(1)
+
+try:
+    import pandas as pd
+except ImportError:
+    print("WARNING: pandas not available. Some features may be limited.")
+    pd = None
+
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass, field
 from collections import deque
@@ -14,12 +27,19 @@ import time
 import hashlib
 from enum import Enum
 from pathlib import Path
+import sys
+import os
 
 # ML imports - using lightweight models for Steam Deck constraints
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-import joblib
+try:
+    from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.model_selection import train_test_split
+    import joblib
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    print("WARNING: scikit-learn not available. ML features will be limited.")
+    SKLEARN_AVAILABLE = False
 
 # For neural network components (optional, can fallback to sklearn)
 try:
@@ -130,6 +150,11 @@ class ShaderCompilationPredictor:
         
     def _initialize_models(self):
         """Initialize ML models optimized for Steam Deck constraints"""
+        if not SKLEARN_AVAILABLE:
+            print("WARNING: scikit-learn not available. Using fallback prediction model.")
+            self.models['fallback'] = None
+            return
+            
         if self.model_type == "ensemble":
             # Optimized ensemble for Steam Deck (4-core AMD Zen 2)
             self.models['rf'] = RandomForestRegressor(
@@ -217,6 +242,10 @@ class ShaderCompilationPredictor:
             self._update_cache_order(shader_metrics.shader_hash)
             return cached['prediction'], cached['confidence']
         
+        # Fallback prediction if sklearn not available
+        if not SKLEARN_AVAILABLE or 'fallback' in self.models:
+            return self._fallback_prediction(shader_metrics, use_cache)
+        
         # Prepare features
         features = shader_metrics.to_feature_vector().reshape(1, -1)
         features_scaled = self.feature_scaler.transform(features)
@@ -254,6 +283,55 @@ class ShaderCompilationPredictor:
         })
         
         return final_prediction, confidence
+    
+    def _fallback_prediction(self, shader_metrics: ShaderMetrics, 
+                           use_cache: bool = True) -> Tuple[float, float]:
+        """
+        Simple heuristic-based prediction when ML libraries are not available
+        """
+        # Basic heuristic based on shader complexity
+        base_time = 10.0  # Base compilation time in ms
+        
+        # Complexity factors
+        complexity_score = (
+            shader_metrics.bytecode_size / 1000.0 * 2.0 +
+            shader_metrics.instruction_count / 100.0 * 3.0 +
+            shader_metrics.register_pressure / 10.0 * 1.5 +
+            shader_metrics.texture_samples * 2.0 +
+            shader_metrics.branch_complexity * 5.0 +
+            shader_metrics.loop_depth * 10.0
+        )
+        
+        # Thermal impact (higher temps = slower compilation)
+        thermal_factor = 1.0
+        if shader_metrics.gpu_temp_celsius > 80:
+            thermal_factor = 1.5
+        elif shader_metrics.gpu_temp_celsius > 90:
+            thermal_factor = 2.0
+            
+        # Shader type factor
+        type_factors = {
+            ShaderType.VERTEX: 1.0,
+            ShaderType.FRAGMENT: 1.2,
+            ShaderType.COMPUTE: 1.8,
+            ShaderType.GEOMETRY: 1.5,
+            ShaderType.TESSELLATION: 1.3,
+            ShaderType.RAYTRACING: 2.5
+        }
+        type_factor = type_factors.get(shader_metrics.shader_type, 1.0)
+        
+        predicted_time = base_time + complexity_score * thermal_factor * type_factor
+        confidence = 0.6  # Lower confidence for heuristic method
+        
+        # Cache result
+        if use_cache:
+            self._cache_prediction(
+                shader_metrics.shader_hash,
+                predicted_time,
+                confidence
+            )
+            
+        return predicted_time, confidence
     
     def _cache_prediction(self, shader_hash: str, prediction: float, confidence: float):
         """Manage LRU cache for predictions"""
