@@ -1,0 +1,64 @@
+[Unit]
+Description=ML Shader Prediction Compiler Service
+Documentation=https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler
+After=graphical-session.target network.target
+Wants=network.target
+
+[Service]
+Type=exec
+ExecStart=/opt/shader-predict-compile/launcher.sh --service
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=60
+TimeoutStopSec=30
+KillMode=mixed
+
+# User and permissions
+User=%i
+Group=%i
+UMask=0022
+
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+PrivateDevices=false
+ProtectHostname=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+RestrictNamespaces=true
+
+# File system access
+ReadWritePaths=%h/.config/shader-predict-compile %h/.cache/shader-predict-compile
+ReadOnlyPaths=%h/.steam %h/.local/share/Steam /sys/class/thermal /sys/class/hwmon /sys/class/dmi
+
+# Resource limits (Steam Deck optimized)
+MemoryMax=512M
+MemorySwapMax=256M
+CPUQuota=25%
+TasksMax=50
+Nice=10
+IOSchedulingClass=2
+IOSchedulingPriority=4
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+Environment=XDG_RUNTIME_DIR=/run/user/%i
+Environment=HOME=%h
+Environment=ML_SHADER_PREDICTOR_SERVICE=1
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ml-shader-predictor
+
+[Install]
+WantedBy=default.target
+Also=ml-shader-predictor-thermal.service
