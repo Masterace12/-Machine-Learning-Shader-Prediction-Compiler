@@ -1,0 +1,64 @@
+[Unit]
+Description=ML Shader Predictor Cache Maintenance Service
+Documentation=https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler
+After=multi-user.target
+
+# Conditions for running maintenance
+ConditionACPower=true
+ConditionPathExists=!/tmp/gaming-mode-active
+ConditionPathExists=!/tmp/steam-big-picture-active
+
+[Service]
+Type=oneshot
+User=%i
+Group=%i
+WorkingDirectory=/opt/ml-shader-predictor
+
+# Environment setup
+Environment=PYTHONPATH=/opt/ml-shader-predictor/src
+Environment=PYTHONUNBUFFERED=1
+Environment=MAINTENANCE_MODE=1
+Environment=XDG_CONFIG_HOME=%h/.config
+Environment=XDG_CACHE_HOME=%h/.cache
+
+# Maintenance execution
+ExecStartPre=/bin/bash -c 'test -f /opt/ml-shader-predictor/venv/bin/python || exit 1'
+ExecStart=/opt/ml-shader-predictor/venv/bin/python -m shader_prediction_system --maintenance --cleanup
+ExecStartPost=/bin/bash -c 'echo "Maintenance completed at $(date)" >> %h/.cache/ml-shader-predictor/maintenance.log'
+
+# Timeout for maintenance operations
+TimeoutStartSec=900
+TimeoutStopSec=60
+
+# Resource limits - Low priority maintenance
+CPUQuota=20%
+MemoryMax=256M
+MemoryHigh=192M
+IOWeight=10
+Nice=15
+IOSchedulingClass=3
+IOSchedulingPriority=7
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+# Filesystem access for cache maintenance
+ReadWritePaths=%h/.config/ml-shader-predictor
+ReadWritePaths=%h/.cache/ml-shader-predictor
+ReadWritePaths=%h/.local/share/ml-shader-predictor
+ReadWritePaths=%h/.local/share/Steam/steamapps/shadercache
+ReadWritePaths=/opt/ml-shader-predictor/logs
+ReadWritePaths=/tmp/ml-shader-predictor
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ml-shader-maintenance
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,113 @@
+[Unit]
+Description=ML Shader Prediction Compiler Service
+Documentation=https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler
+After=graphical-session.target network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/ml-shader-predictor
+ConditionUser=!root
+
+[Service]
+Type=notify
+# Dynamic user detection - will be replaced during installation
+User=%i
+Group=%i
+WorkingDirectory=/opt/ml-shader-predictor
+
+# Environment setup
+Environment=PYTHONPATH=/opt/ml-shader-predictor/src
+Environment=PYTHONUNBUFFERED=1
+Environment=XDG_CONFIG_HOME=%h/.config
+Environment=XDG_CACHE_HOME=%h/.cache
+Environment=XDG_DATA_HOME=%h/.local/share
+
+# Steam Deck RADV optimizations
+Environment=RADV_PERFTEST=aco,nggc,sam
+Environment=RADV_DEBUG=noshaderdb,nocompute
+Environment=MESA_VK_DEVICE_SELECT=1002:163f
+Environment=RADV_LOWER_DISCARD_TO_DEMOTE=1
+Environment=MESA_GLSL_CACHE_DISABLE=0
+Environment=MESA_GLSL_CACHE_MAX_SIZE=1G
+Environment=__GL_SHADER_DISK_CACHE=1
+Environment=__GL_SHADER_DISK_CACHE_SIZE=1073741824
+Environment=DXVK_ASYNC=1
+
+# Service execution
+ExecStartPre=/bin/bash -c 'test -f /opt/ml-shader-predictor/venv/bin/python || exit 1'
+ExecStart=/opt/ml-shader-predictor/venv/bin/python -m shader_prediction_system --service --daemon
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -TERM $MAINPID
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=3
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# Resource management - Steam Deck optimized
+CPUQuota=25%
+MemoryMax=1G
+MemoryHigh=768M
+MemorySwapMax=0
+IOWeight=10
+TasksMax=100
+LimitNOFILE=65536
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=no
+RemoveIPC=yes
+
+# Filesystem access
+ReadWritePaths=%h/.config/ml-shader-predictor
+ReadWritePaths=%h/.cache/ml-shader-predictor
+ReadWritePaths=%h/.local/share/ml-shader-predictor
+ReadWritePaths=%h/.local/share/Steam/steamapps/shadercache
+ReadWritePaths=%h/.var/app/com.valvesoftware.Steam
+ReadWritePaths=/tmp/ml-shader-predictor
+ReadWritePaths=/opt/ml-shader-predictor/logs
+
+# System monitoring access (read-only)
+ReadOnlyPaths=/sys/class/thermal
+ReadOnlyPaths=/sys/class/hwmon
+ReadOnlyPaths=/sys/class/power_supply
+ReadOnlyPaths=/sys/devices/virtual/dmi
+ReadOnlyPaths=/proc/cpuinfo
+ReadOnlyPaths=/proc/meminfo
+
+# Hardware device access for Steam Deck
+DeviceAllow=/dev/dri/card0 rw
+DeviceAllow=/dev/dri/renderD128 rw
+DevicePolicy=closed
+SupplementaryGroups=video render
+
+# D-Bus access for system integration
+SystemCallFilter=@system-service
+SystemCallFilter=~@debug @mount @cpu-emulation @obsolete @privileged @resources
+SystemCallErrorNumber=EPERM
+
+# Capability restrictions
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Network access for P2P functionality
+IPAddressDeny=any
+IPAddressAllow=localhost
+IPAddressAllow=10.0.0.0/8
+IPAddressAllow=172.16.0.0/12
+IPAddressAllow=192.168.0.0/16
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+
+[Install]
+WantedBy=graphical-session.target
+Also=ml-shader-predictor-user.service

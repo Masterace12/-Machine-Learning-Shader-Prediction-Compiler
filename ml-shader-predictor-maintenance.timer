@@ -1,0 +1,21 @@
+[Unit]
+Description=ML Shader Predictor Cache Maintenance Timer
+Documentation=https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler
+Requires=ml-shader-predictor-maintenance.service
+
+[Timer]
+# Run every 4 hours when system is active
+OnCalendar=*:0/4:00
+# Also run 15 minutes after boot
+OnBootSec=15min
+# Don't run if system is on battery and below 30%
+ConditionACPower=true
+
+# Randomize execution time to prevent system load spikes
+RandomizedDelaySec=300
+
+# Persistent across reboots/suspend
+Persistent=true
+
+[Install]
+WantedBy=timers.target

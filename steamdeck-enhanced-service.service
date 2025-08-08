@@ -1,0 +1,171 @@
+[Unit]
+Description=ML Shader Prediction Compiler - Steam Deck Enhanced
+Documentation=file:///home/deck/.local/share/ml-shader-predictor/README.md
+After=graphical-session.target steam.service multi-user.target
+Wants=steam.service
+PartOf=steam.service
+Conflicts=shutdown.target reboot.target halt.target
+
+# Service dependencies - only start if these are available
+Requisite=home-deck-.local-share-ml\x2dshader\x2dpredictor.mount
+After=home-deck-.local-share-ml\x2dshader\x2dpredictor.mount
+
+# Conditional start - only run if Steam Deck is detected
+ConditionPathExists=/sys/class/dmi/id/product_name
+ConditionFileNotEmpty=/sys/class/dmi/id/product_name
+
+[Service]
+Type=notify
+ExecStart=/home/deck/.local/bin/ml-shader-predictor --daemon --systemd-notify
+ExecStartPre=/bin/bash -c 'echo "Starting ML Shader Predictor for Steam Deck..."'
+ExecStartPost=/bin/bash -c 'echo "ML Shader Predictor service started successfully"'
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/home/deck/.local/bin/ml-shader-predictor --stop
+ExecStopPost=/bin/bash -c 'echo "ML Shader Predictor service stopped"'
+
+# Restart policy optimized for gaming scenarios
+Restart=on-failure
+RestartSec=15s
+RestartPreventExitStatus=SIGKILL
+StartLimitInterval=300s
+StartLimitBurst=5
+
+# Watchdog for health monitoring (5 minute timeout)
+WatchdogSec=300s
+NotifyAccess=main
+TimeoutStartSec=60s
+TimeoutStopSec=30s
+
+# Process management
+KillMode=mixed
+KillSignal=SIGTERM
+FinalKillSignal=SIGKILL
+TimeoutStopFailureMode=terminate
+
+# Working directory and environment
+WorkingDirectory=/home/deck/.local/share/ml-shader-predictor
+Environment=PYTHONPATH=/home/deck/.local/share/ml-shader-predictor/src
+Environment=PYTHONOPTIMIZE=1
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONIOENCODING=utf-8
+
+# Memory optimization for Steam Deck
+Environment=MALLOC_TRIM_THRESHOLD_=100000
+Environment=MALLOC_MMAP_THRESHOLD_=100000
+Environment=MALLOC_MMAP_MAX_=65536
+
+# Threading control for limited CPU cores
+Environment=OMP_NUM_THREADS=2
+Environment=MKL_NUM_THREADS=2
+Environment=NUMEXPR_MAX_THREADS=2
+Environment=OPENBLAS_NUM_THREADS=2
+
+# Steam Deck specific environment
+Environment=STEAM_DECK_OPTIMIZED=1
+Environment=RDNA2_OPTIMIZED=1
+Environment=HANDHELD_DEVICE=1
+
+# Logging configuration
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ml-shader-predictor
+SyslogFacility=daemon
+SyslogLevel=info
+
+# Security hardening for Steam Deck
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=false  # Need device access for GPU monitoring
+ProtectHome=false     # Need access to Steam directories
+ProtectSystem=strict
+ReadWritePaths=/home/deck/.local/share/ml-shader-predictor
+ReadWritePaths=/home/deck/.config/ml-shader-predictor
+ReadWritePaths=/home/deck/.cache/ml-shader-predictor
+ReadWritePaths=/tmp
+
+# Steam integration paths (read-only access)
+ReadOnlyPaths=/home/deck/.steam
+ReadOnlyPaths=/home/deck/.local/share/Steam
+ReadOnlyPaths=/home/deck/.var/app/com.valvesoftware.Steam
+
+# Hardware monitoring access (read-only)
+ReadOnlyPaths=/sys/class/hwmon
+ReadOnlyPaths=/sys/class/thermal  
+ReadOnlyPaths=/sys/class/dmi
+ReadOnlyPaths=/sys/devices
+ReadOnlyPaths=/proc/cpuinfo
+ReadOnlyPaths=/proc/meminfo
+ReadOnlyPaths=/proc/stat
+ReadOnlyPaths=/proc/loadavg
+
+# Network restrictions (only local connections for P2P)
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAddressDeny=any
+IPAddressAllow=localhost
+IPAddressAllow=link-local
+IPAddressAllow=multicast
+
+# System call restrictions
+SystemCallFilter=@system-service
+SystemCallFilter=~@debug @mount @cpu-emulation @obsolete @privileged @reboot @swap
+SystemCallErrorNumber=EPERM
+
+# Security hardening
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectProc=invisible
+ProcSubset=pid
+CapabilityBoundingSet=
+
+# Steam Deck Resource Limits - Optimized for gaming performance
+# Memory limit: 300MB maximum (leaves plenty for games)
+MemoryMax=300M
+MemorySwapMax=0
+MemoryHigh=250M
+
+# CPU limit: 50% maximum (2 cores worth on Steam Deck's 4-core setup)
+CPUQuota=50%
+CPUWeight=100
+
+# I/O priority: Lower than games but higher than background tasks
+IOWeight=200
+IOSchedulingClass=1
+IOSchedulingPriority=4
+
+# Process limits
+TasksMax=100
+LimitNOFILE=1024
+LimitNPROC=50
+
+# Thermal protection integration
+# Service will auto-throttle when CPU temp > 80C
+ExecStartPre=/bin/bash -c 'TEMP=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo 65000); if [ $((TEMP/1000)) -gt 85 ]; then echo "System too hot for service start: $((TEMP/1000))°C" >&2; exit 1; fi'
+
+# Battery awareness - reduce priority when on battery
+ExecStartPre=/bin/bash -c 'if command -v upower >/dev/null 2>&1; then BATTERY_STATE=$(upower -i $(upower -e | grep BAT) 2>/dev/null | grep -E "state" | grep -v "charging" | wc -l); if [ "$BATTERY_STATE" -gt 0 ]; then echo "Running on battery - enabling power save mode" >&2; fi; fi'
+
+# Gaming mode detection and resource adjustment
+ExecStartPre=/bin/bash -c 'if pgrep -f "steam.*-gamepadui" >/dev/null 2>&1; then echo "Gaming mode detected - reducing resource usage" >&2; fi'
+
+# Steam Deck OLED detection and optimization
+ExecStartPre=/bin/bash -c 'PRODUCT=$(cat /sys/class/dmi/id/product_name 2>/dev/null || echo "unknown"); if echo "$PRODUCT" | grep -q "1040"; then echo "Steam Deck OLED detected - enabling OLED optimizations" >&2; export STEAM_DECK_OLED=1; fi'
+
+[Install]
+WantedBy=default.target
+Also=ml-shader-predictor-thermal-monitor.service
+Also=ml-shader-predictor-maintenance.timer
+
+# Service aliases for easier management
+Alias=shader-predictor.service
+Alias=steamdeck-ml-shader.service

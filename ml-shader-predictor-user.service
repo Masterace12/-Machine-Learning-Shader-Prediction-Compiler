@@ -1,0 +1,58 @@
+[Unit]
+Description=ML Shader Prediction Compiler (User Service)
+Documentation=https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler
+After=graphical-session.target
+PartOf=graphical-session.target
+ConditionPathExists=%h/.local/share/ml-shader-predictor
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/ml-shader-predictor
+
+# Environment setup
+Environment=PYTHONPATH=%h/.local/share/ml-shader-predictor/src
+Environment=PYTHONUNBUFFERED=1
+Environment=XDG_CONFIG_HOME=%h/.config
+Environment=XDG_CACHE_HOME=%h/.cache
+Environment=XDG_DATA_HOME=%h/.local/share
+
+# Steam Deck optimizations - User mode
+Environment=RADV_PERFTEST=aco,nggc,sam
+Environment=RADV_DEBUG=noshaderdb,nocompute
+Environment=MESA_GLSL_CACHE_DISABLE=0
+Environment=MESA_GLSL_CACHE_MAX_SIZE=512M
+Environment=__GL_SHADER_DISK_CACHE=1
+Environment=__GL_SHADER_DISK_CACHE_SIZE=536870912
+Environment=DXVK_ASYNC=1
+
+# Gaming Mode integration
+Environment=STEAM_COMPAT_CLIENT_INSTALL_PATH=%h/.steam/steam
+Environment=STEAM_COMPAT_DATA_PATH=%h/.steam/steam/steamapps/compatdata
+
+# Service execution
+ExecStartPre=/bin/bash -c 'mkdir -p %h/.config/ml-shader-predictor %h/.cache/ml-shader-predictor %h/.local/share/ml-shader-predictor/logs'
+ExecStart=%h/.local/share/ml-shader-predictor/venv/bin/python -m shader_prediction_system --user-service
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -TERM $MAINPID
+
+# Restart policy - More conservative for user service
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=300
+StartLimitBurst=5
+TimeoutStartSec=30
+TimeoutStopSec=15
+
+# Resource limits - User service gets less resources
+MemoryMax=512M
+MemoryHigh=384M
+TasksMax=50
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ml-shader-predictor-user
+
+[Install]
+WantedBy=default.target
+WantedBy=steam-session.target

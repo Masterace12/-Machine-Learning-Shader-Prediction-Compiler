@@ -1,0 +1,308 @@
+app-id: com.shaderpredict.MLCompiler
+runtime: org.freedesktop.Platform
+runtime-version: '22.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.python3
+
+command: ml-shader-predictor-flatpak
+
+finish-args:
+  # Filesystem access for Steam Deck
+  - --filesystem=~/.steam:rw
+  - --filesystem=~/.local/share/Steam:rw
+  - --filesystem=~/.var/app/com.valvesoftware.Steam:rw
+  - --filesystem=~/.cache/mesa_shader_cache:rw
+  - --filesystem=~/.cache/radv_builtin_shaders*:rw
+  - --filesystem=~/.cache/amd_shader_cache:rw
+  - --filesystem=~/.config/ml-shader-predictor:create
+  - --filesystem=~/.local/share/ml-shader-predictor:create
+  
+  # System access for hardware monitoring
+  - --device=dri
+  - --device=all
+  - --filesystem=/sys/class/hwmon:ro
+  - --filesystem=/sys/class/thermal:ro
+  - --filesystem=/sys/class/dmi:ro
+  - --filesystem=/sys/devices:ro
+  - --filesystem=/proc/cpuinfo:ro
+  - --filesystem=/proc/meminfo:ro
+  
+  # Network access for updates and P2P features
+  - --share=network
+  
+  # IPC for Steam integration
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --socket=fallback-x11
+  
+  # System services
+  - --system-talk-name=org.freedesktop.UPower
+  - --system-talk-name=org.freedesktop.login1
+  
+  # Session services for Steam Deck
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.portal.*
+  
+  # Environment variables for Steam Deck optimization
+  - --env=PYTHONOPTIMIZE=1
+  - --env=MALLOC_TRIM_THRESHOLD_=100000
+  - --env=OMP_NUM_THREADS=4
+  - --env=MKL_NUM_THREADS=4
+  - --env=STEAM_DECK_OPTIMIZED=1
+
+modules:
+  - name: python3-numpy
+    buildsystem: simple
+    build-commands:
+      - pip3 install --exists-action=i --no-index --find-links="file://${PWD}" --prefix=${FLATPAK_DEST} numpy==1.24.4 --no-build-isolation
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/65/6e/09db70a523a96d25e115e71cc56a6f9031e7b9cd9376aa0f379a5d4223433/numpy-1.24.4-cp310-cp310-linux_x86_64.whl
+        sha256: c5462d19336db4560041517dbb7759c21d181a67cb01b36ca109b2ae37d32418
+        only-arches:
+          - x86_64
+
+  - name: python3-psutil
+    buildsystem: simple
+    build-commands:
+      - pip3 install --exists-action=i --no-index --find-links="file://${PWD}" --prefix=${FLATPAK_DEST} psutil==5.9.5 --no-build-isolation
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/2d/01/beb7331fc6c8d1c49dd5a44dae530afc9d9f8ed378dfea6d9ac8a2efb6ce3/psutil-5.9.5-cp36-abi3-linux_x86_64.whl
+        sha256: 32acf55cb9a8cbfb29167cd005951df81b567099295291bcfd1027365b36591d
+
+  - name: python3-pyyaml
+    buildsystem: simple
+    build-commands:
+      - pip3 install --exists-action=i --no-index --find-links="file://${PWD}" --prefix=${FLATPAK_DEST} PyYAML==6.0.1 --no-build-isolation
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/7d/39/472f2554a0f1e825bd7c5afc11c817cd7a2f3657460f7159f691fbb37c51/PyYAML-6.0.1-cp310-cp310-linux_x86_64.whl
+        sha256: 498807b927ca2510baea1b05cc91d7da4fbac6b8aff8a4d5b68f4bf6d95de4f
+
+  - name: python3-joblib
+    buildsystem: simple
+    build-commands:
+      - pip3 install --exists-action=i --no-index --find-links="file://${PWD}" --prefix=${FLATPAK_DEST} joblib==1.3.2 --no-build-isolation
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/10/40/d551139c85db202f1f384ba8bcf96aca2f665b84c3ac8c1c6f4bb5e7017a2/joblib-1.3.2-py3-none-any.whl
+        sha256: 92f865e621e17784e7955080b6d042489e3b8e294949cc44c6eac304f59772b1
+
+  - name: python3-requests
+    buildsystem: simple
+    build-commands:
+      - pip3 install --exists-action=i --no-index --find-links="file://${PWD}" --prefix=${FLATPAK_DEST} requests==2.31.0 certifi==2023.7.22 charset-normalizer==3.2.0 idna==3.4 urllib3==2.0.4 --no-build-isolation
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/70/8e/0e2d847013cb52cd35b38c009bb167a1a26b2ce6cd6965bf26b47bc0bf44e/requests-2.31.0-py3-none-any.whl
+        sha256: 58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f
+      - type: file
+        url: https://files.pythonhosted.org/packages/4c/dd/2234eab22353ffc7d94e8d13177aaa050464d0bb32f120907b17729ec4e5c/certifi-2023.7.22-py3-none-any.whl
+        sha256: 92d6037539857d8206b8f6ae472e8b77db8058fec5937a1ef3f54304089edbb9
+      - type: file
+        url: https://files.pythonhosted.org/packages/ff/d7/8d757f8bd45be079d76309248845a04f09619a7b17d6dfc8c9ff6433cac2/charset_normalizer-3.2.0-cp310-cp310-linux_x86_64.whl
+        sha256: 3b447982ad46348c02cb90d230b75ac34a9a52cbce4e31618d59b9c4315dc2dc
+      - type: file
+        url: https://files.pythonhosted.org/packages/fc/34/3030de6f1370931b9dbb4dad48f6ab1015ab1d32447850b9fc94e60097be/idna-3.4-py3-none-any.whl
+        sha256: 90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2
+      - type: file
+        url: https://files.pythonhosted.org/packages/9a/19/5c90b24608b5d5574e3957b54b9b8dbf90c6b8d6a5a6acde37ea2e07a5b4/urllib3-2.0.4-py3-none-any.whl
+        sha256: de7df1803967d2c2a98e4b11bb7d6bd9210474c46e8a0401514e3a42a75ebde4
+
+  - name: python3-scikit-learn
+    buildsystem: simple
+    build-commands:
+      - pip3 install --exists-action=i --no-index --find-links="file://${PWD}" --prefix=${FLATPAK_DEST} scikit-learn==1.3.2 scipy==1.11.4 threadpoolctl==3.2.0 --no-build-isolation
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/6a/d1/fb5c5fbc0b7b5be9e09a78a6ad1c0e07076a3ad1026ba99ba40aa1e2a66e/scikit_learn-1.3.2-cp310-cp310-linux_x86_64.whl
+        sha256: 20766f515e6cd6f954554387dfae705d93c7b544ec0e6c6a5d8e006f6f7ef480
+      - type: file
+        url: https://files.pythonhosted.org/packages/c0/04/2bdacc8ac6387b15db6faa40295f8bd25b7f3da4a7005fdcb1a0ccad1a0bb/scipy-1.11.4-cp310-cp310-linux_x86_64.whl
+        sha256: 90a2b78e7f5733b9de748f589f09225013685f9b218275257f8a8168ededaeaa
+      - type: file
+        url: https://files.pythonhosted.org/packages/f2/d0/21c1aa5b39ea07f3b7bbbc8c9b18a7142e0f9e16aa5bfe2b2da9b2e3d6f5d/threadpoolctl-3.2.0-py3-none-any.whl
+        sha256: 2b7818516e423bdaebb97c723f86a7c6b0a83d3f3b0970328d66f4d9104dc032
+
+  - name: python3-pyudev
+    buildsystem: simple
+    build-commands:
+      - pip3 install --exists-action=i --no-index --find-links="file://${PWD}" --prefix=${FLATPAK_DEST} pyudev==0.24.1 --no-build-isolation
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/9f/2f/8b6b82068d6e06b7c2a5eb8e5bf0b9a0a1d44b33de44a28d76be88f4fe97/pyudev-0.24.1-py3-none-any.whl
+        sha256: 01a5f2a6d7b96636b2e80e3b9c7b31cdbac7ad2d29d7e5b625ecafb9c540a4a1
+
+  - name: ml-shader-predictor
+    buildsystem: simple
+    build-commands:
+      # Create installation directories
+      - mkdir -p ${FLATPAK_DEST}/lib/ml-shader-predictor/{src,config,logs,models,cache}
+      - mkdir -p ${FLATPAK_DEST}/bin
+      - mkdir -p ${FLATPAK_DEST}/share/applications
+      - mkdir -p ${FLATPAK_DEST}/share/icons/hicolor/64x64/apps
+      - mkdir -p ${FLATPAK_DEST}/share/metainfo
+      
+      # Copy source files
+      - cp -r src/* ${FLATPAK_DEST}/lib/ml-shader-predictor/src/
+      
+      # Create Steam Deck optimized configuration
+      - |
+        cat > ${FLATPAK_DEST}/lib/ml-shader-predictor/config/flatpak_config.json << 'EOF'
+        {
+          "version": "3.0.0-flatpak",
+          "steam_deck": {
+            "flatpak_mode": true,
+            "sandbox_mode": true
+          },
+          "predictor": {
+            "model_type": "lightweight",
+            "cache_size": 1000,
+            "max_temp": 83.0,
+            "power_budget": 12.0,
+            "sequence_length": 50,
+            "buffer_size": 5000,
+            "memory_optimization": true,
+            "max_memory_usage_mb": 200
+          },
+          "system": {
+            "monitor_interval": 1.0,
+            "thermal_protection": true,
+            "battery_optimization": true,
+            "performance_mode": "balanced",
+            "resource_limits": {
+              "memory_max_mb": 250,
+              "cpu_quota_percent": 40
+            }
+          },
+          "logging": {
+            "level": "INFO",
+            "max_file_size_mb": 5,
+            "backup_count": 3
+          }
+        }
+        EOF
+      
+      # Create Flatpak launcher wrapper
+      - |
+        cat > ${FLATPAK_DEST}/bin/ml-shader-predictor-flatpak << 'EOF'
+        #!/bin/bash
+        # ML Shader Predictor Flatpak Launcher
+        
+        set -euo pipefail
+        
+        readonly APP_DIR="/app/lib/ml-shader-predictor"
+        readonly CONFIG_FILE="$APP_DIR/config/flatpak_config.json"
+        readonly USER_CONFIG_DIR="$HOME/.var/app/com.shaderpredict.MLCompiler/config"
+        readonly USER_DATA_DIR="$HOME/.var/app/com.shaderpredict.MLCompiler/data"
+        readonly USER_CACHE_DIR="$HOME/.var/app/com.shaderpredict.MLCompiler/cache"
+        
+        # Ensure user directories exist
+        mkdir -p "$USER_CONFIG_DIR" "$USER_DATA_DIR" "$USER_CACHE_DIR"
+        
+        # Set environment for Steam Deck optimization
+        export PYTHONPATH="$APP_DIR/src:${PYTHONPATH:-}"
+        export PYTHONOPTIMIZE=1
+        export PYTHONUNBUFFERED=1
+        export MALLOC_TRIM_THRESHOLD_=100000
+        export OMP_NUM_THREADS=4
+        export MKL_NUM_THREADS=4
+        export STEAM_DECK_FLATPAK=1
+        
+        cd "$APP_DIR"
+        
+        case "${1:-daemon}" in
+            "daemon"|"--daemon")
+                exec python3 -O "$APP_DIR/src/steam_deck_integration.py" \
+                    --config "$CONFIG_FILE" \
+                    --user-config-dir "$USER_CONFIG_DIR" \
+                    --user-data-dir "$USER_DATA_DIR" \
+                    --user-cache-dir "$USER_CACHE_DIR" \
+                    --flatpak-mode \
+                    "$@"
+                ;;
+            "gui"|"--gui")
+                if [[ -f "$APP_DIR/src/gui/main_window.py" ]]; then
+                    exec python3 "$APP_DIR/src/gui/main_window.py" \
+                        --config "$CONFIG_FILE" \
+                        --user-config-dir "$USER_CONFIG_DIR" \
+                        --flatpak-mode \
+                        "${@:2}"
+                else
+                    echo "GUI not available in this build"
+                    exit 1
+                fi
+                ;;
+            "status")
+                # Check if running via systemctl or ps
+                if pgrep -f "ml-shader-predictor-flatpak" >/dev/null 2>&1; then
+                    echo "ML Shader Predictor is running"
+                    ps aux | grep -E "ml-shader-predictor|steam_deck_integration" | grep -v grep
+                else
+                    echo "ML Shader Predictor is not running"
+                fi
+                ;;
+            "help"|"--help")
+                echo "ML Shader Predictor - Steam Deck Flatpak Edition"
+                echo ""
+                echo "Usage: flatpak run com.shaderpredict.MLCompiler [COMMAND]"
+                echo ""
+                echo "Commands:"
+                echo "  daemon, --daemon   Start in daemon mode (default)"
+                echo "  gui, --gui         Launch GUI interface"
+                echo "  status             Show running status"
+                echo "  help, --help       Show this help"
+                echo ""
+                echo "The application runs automatically in the background to optimize"
+                echo "shader compilation for Steam games on Steam Deck."
+                ;;
+            *)
+                echo "Unknown command: $1"
+                echo "Use 'help' for available commands"
+                exit 1
+                ;;
+        esac
+        EOF
+        
+      - chmod +x ${FLATPAK_DEST}/bin/ml-shader-predictor-flatpak
+      
+      # Copy desktop entry
+      - cp com.shaderpredict.MLCompiler.desktop ${FLATPAK_DEST}/share/applications/
+      
+      # Copy metainfo
+      - cp com.shaderpredict.MLCompiler.metainfo.xml ${FLATPAK_DEST}/share/metainfo/
+      
+      # Create simple icon
+      - |
+        cat > ${FLATPAK_DEST}/share/icons/hicolor/64x64/apps/com.shaderpredict.MLCompiler.svg << 'EOF'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <rect width="64" height="64" rx="8" fill="#1e3d59"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#4a90a4"/>
+          <circle cx="20" cy="20" r="4" fill="#87ceeb"/>
+          <circle cx="44" cy="20" r="4" fill="#87ceeb"/>
+          <circle cx="32" cy="35" r="6" fill="#87ceeb"/>
+          <path d="M16 44 L32 28 L48 44" stroke="#87ceeb" stroke-width="2" fill="none"/>
+          <text x="32" y="52" font-family="monospace" font-size="8" fill="white" text-anchor="middle">ML</text>
+        </svg>
+        EOF
+    sources:
+      - type: dir
+        path: .
+        
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /lib/cmake
+  - /share/aclocal
+  - /share/devhelp
+  - /share/doc
+  - /share/gtk-doc
+  - /share/man
+  - /share/pkgconfig
+  - '*.la'
+  - '*.a'

@@ -1,0 +1,63 @@
+[Unit]
+Description=ML Shader Predictor Thermal Monitor - Steam Deck
+Documentation=file:///home/deck/.local/share/ml-shader-predictor/README.md
+PartOf=steamdeck-enhanced-service.service
+After=steamdeck-enhanced-service.service
+Requisite=steamdeck-enhanced-service.service
+BindsTo=steamdeck-enhanced-service.service
+
+# Only run on Steam Deck hardware
+ConditionPathExists=/sys/class/thermal/thermal_zone0/temp
+ConditionPathExists=/sys/class/dmi/id/product_name
+
+[Service]
+Type=simple
+ExecStart=/home/deck/.local/bin/ml-shader-predictor-thermal-monitor
+Restart=on-failure
+RestartSec=10s
+RestartPreventExitStatus=SIGKILL
+
+# Lower priority than main service
+Nice=10
+CPUSchedulingPolicy=2
+CPUSchedulingPriority=1
+
+# Minimal resources for thermal monitoring
+MemoryMax=50M
+CPUQuota=10%
+TasksMax=10
+LimitNOFILE=64
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=false
+ProtectHome=true
+ProtectSystem=strict
+
+# Read-only access to thermal sensors
+ReadOnlyPaths=/sys/class/thermal
+ReadOnlyPaths=/sys/class/hwmon
+ReadOnlyPaths=/sys/devices
+ReadOnlyPaths=/sys/class/dmi
+
+# Minimal write access for alerts
+ReadWritePaths=/home/deck/.local/share/ml-shader-predictor/logs
+
+# Environment
+Environment=PYTHONOPTIMIZE=1
+Environment=PYTHONUNBUFFERED=1
+WorkingDirectory=/home/deck/.local/share/ml-shader-predictor
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ml-shader-thermal
+SyslogLevel=warning
+
+# Thermal protection watchdog
+WatchdogSec=30s
+NotifyAccess=main
+
+[Install]
+WantedBy=default.target

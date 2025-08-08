@@ -1,0 +1,11 @@
+# Core dependencies for Shader Predictive Compiler
+# These are typically available on SteamOS via pacman
+
+# Python GTK bindings for GUI
+PyGObject>=3.40.0
+
+# System process and hardware monitoring
+psutil>=5.8.0
+
+# Numerical computations for shader analysis
+numpy>=1.20.0

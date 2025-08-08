@@ -1,0 +1,38 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ML Shader Predictor
+Comment=Machine Learning Shader Prediction Compiler for Steam Deck
+GenericName=Shader Optimizer
+Icon=ml-shader-predictor
+Exec=/usr/local/bin/ml-shader-predictor-gui
+Actions=Service;Configure;Monitor;
+MimeType=application/x-steam-shader;
+Categories=Game;Utility;System;
+Keywords=shader;prediction;steam;deck;vulkan;optimization;
+StartupNotify=true
+NoDisplay=false
+Terminal=false
+StartupWMClass=ml-shader-predictor
+
+# Steam Deck specific metadata
+X-KDE-SubstituteUID=false
+X-KDE-Username=deck
+X-Steam-Deck-Compatible=true
+X-Gaming-Mode-Compatible=true
+
+[Desktop Action Service]
+Name=Start Shader Prediction Service
+Exec=/usr/local/bin/ml-shader-predictor --service --start
+Icon=ml-shader-predictor-service
+
+[Desktop Action Configure]
+Name=Configuration
+Exec=/usr/local/bin/ml-shader-predictor --configure
+Icon=preferences-system
+
+[Desktop Action Monitor]
+Name=Performance Monitor
+Exec=/usr/local/bin/ml-shader-predictor --monitor
+Icon=utilities-system-monitor
