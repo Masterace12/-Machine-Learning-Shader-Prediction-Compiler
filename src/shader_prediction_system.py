@@ -425,24 +425,34 @@ class ThermalAwareScheduler:
         self.priority_queue = []  # High priority compilations
         self.thermal_history = deque(maxlen=60)  # 60 second window
         
-        # Updated thermal state thresholds based on Steam Deck research
+        # Updated thermal state thresholds - More aggressive for sustained gaming performance
         self.thermal_thresholds = {
-            ThermalState.COOL: (0, 65),
-            ThermalState.NORMAL: (65, 80),
-            ThermalState.WARM: (80, 85),
-            ThermalState.HOT: (85, 90),
-            ThermalState.THROTTLING: (90, 95),
-            ThermalState.CRITICAL: (95, float('inf'))
+            ThermalState.COOL: (0, 65),      # Optimal performance zone
+            ThermalState.NORMAL: (65, 75),   # Good performance zone
+            ThermalState.WARM: (75, 83),     # Caution zone - start reducing load
+            ThermalState.HOT: (83, 88),      # Throttle zone - minimize shader compilation
+            ThermalState.THROTTLING: (88, 92), # Critical zone - stop compilation
+            ThermalState.CRITICAL: (92, float('inf'))  # Emergency protection
         }
         
-        # Compilation slots per thermal state (optimized for Steam Deck)
+        # Compilation slots per thermal state - More conservative for gaming
         self.compilation_slots = {
-            ThermalState.COOL: 4,        # Full compilation capacity
-            ThermalState.NORMAL: 3,      # Slight reduction
-            ThermalState.WARM: 2,        # Half capacity
-            ThermalState.HOT: 1,         # Minimal compilation
-            ThermalState.THROTTLING: 0,  # Stop all compilation
+            ThermalState.COOL: 3,        # Full compilation capacity (reduced from 4)
+            ThermalState.NORMAL: 2,      # Moderate compilation
+            ThermalState.WARM: 1,        # Minimal compilation only
+            ThermalState.HOT: 0,         # Stop non-critical compilation
+            ThermalState.THROTTLING: 0,  # Complete stop
             ThermalState.CRITICAL: 0     # Emergency stop
+        }
+        
+        # Power-aware compilation limits (watts allocated to shader compilation)
+        self.power_limits = {
+            ThermalState.COOL: 3.0,      # 3W for shader compilation
+            ThermalState.NORMAL: 2.0,    # 2W allocated
+            ThermalState.WARM: 1.0,      # 1W only
+            ThermalState.HOT: 0.5,       # Minimal power
+            ThermalState.THROTTLING: 0.0, # No power for compilation
+            ThermalState.CRITICAL: 0.0   # Emergency
         }
         
     def update_thermal_state(self, temp: float, power: float):

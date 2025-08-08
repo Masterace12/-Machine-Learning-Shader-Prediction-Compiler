@@ -58,16 +58,63 @@ class SteamDeckHardwareMonitor:
         self.state_history = deque(maxlen=300)  # 5 minutes at 1Hz
         self.callbacks = []
         
-        # Steam Deck specific paths (these may vary based on kernel/drivers)
-        self.sensor_paths = {
-            'gpu_temp': '/sys/class/hwmon/hwmon0/temp1_input',
-            'cpu_temp': '/sys/class/thermal/thermal_zone0/temp',
-            'gpu_power': '/sys/class/hwmon/hwmon0/power1_input',
-            'fan_speed': '/sys/class/hwmon/hwmon0/fan1_input'
+        # Steam Deck specific paths - Updated for latest SteamOS versions
+        # These paths may vary based on kernel/drivers, so we'll check multiple options
+        self.sensor_paths = self._discover_sensor_paths()
+        
+        # Backup sensor paths to try
+        self.backup_sensor_paths = {
+            'gpu_temp': [
+                '/sys/class/hwmon/hwmon0/temp1_input',  # APU die temp
+                '/sys/class/hwmon/hwmon1/temp1_input',
+                '/sys/class/thermal/thermal_zone0/temp',
+                '/sys/devices/pci0000:00/0000:00:08.1/0000:04:00.0/hwmon/hwmon0/temp1_input'
+            ],
+            'cpu_temp': [
+                '/sys/class/thermal/thermal_zone0/temp',  # CPU thermal zone
+                '/sys/class/hwmon/hwmon0/temp2_input',
+                '/sys/devices/virtual/thermal/thermal_zone0/temp'
+            ],
+            'gpu_power': [
+                '/sys/class/hwmon/hwmon0/power1_input',  # APU power
+                '/sys/class/hwmon/hwmon1/power1_input',
+                '/sys/devices/pci0000:00/0000:00:08.1/0000:04:00.0/hwmon/hwmon0/power1_input'
+            ],
+            'fan_speed': [
+                '/sys/class/hwmon/hwmon0/fan1_input',  # System fan
+                '/sys/class/hwmon/hwmon1/fan1_input',
+                '/sys/devices/platform/asus-nb-wmi/hwmon/hwmon*/fan1_input'
+            ]
         }
         
         # Check if we're running on Steam Deck
         self.is_steam_deck = self._detect_steam_deck()
+    
+    def _discover_sensor_paths(self) -> Dict[str, str]:
+        """Discover working sensor paths for Steam Deck hardware"""
+        discovered_paths = {}
+        
+        # Try to find working sensor paths
+        for sensor_type, path_list in self.backup_sensor_paths.items():
+            for path in path_list:
+                if '*' in path:
+                    # Handle wildcard paths
+                    import glob
+                    matches = glob.glob(path)
+                    if matches:
+                        discovered_paths[sensor_type] = matches[0]
+                        break
+                elif os.path.exists(path):
+                    try:
+                        # Test if we can read from the sensor
+                        with open(path, 'r') as f:
+                            f.read()
+                        discovered_paths[sensor_type] = path
+                        break
+                    except (PermissionError, OSError):
+                        continue
+        
+        return discovered_paths
         
     def _detect_steam_deck(self) -> bool:
         """Detect if running on actual Steam Deck hardware"""
@@ -303,11 +350,18 @@ class SteamDeckGameIntegration:
         self.game_configs = {}
         self.shader_hooks = {}
         
-        # Steam paths
+        # Steam paths - Updated for Steam Deck specific locations
         self.steam_path = self._find_steam_path()
         self.shader_cache_path = os.path.join(
             self.steam_path, 
             "steamapps", "shadercache"
+        ) if self.steam_path else None
+        
+        # Fossilize integration paths (Steam's shader caching system)
+        self.fossilize_path = self._find_fossilize_path()
+        self.fossilize_db_path = os.path.join(
+            self.steam_path,
+            "steamapps", "shadercache", "fozdb"
         ) if self.steam_path else None
         
     def _find_steam_path(self) -> Optional[str]:
@@ -321,6 +375,20 @@ class SteamDeckGameIntegration:
         
         for path in possible_paths:
             if os.path.exists(path):
+                return path
+                
+        return None
+        
+    def _find_fossilize_path(self) -> Optional[str]:
+        """Find Fossilize (Steam's shader cache system) installation path"""
+        possible_paths = [
+            "/usr/bin/fossilize-replay",  # System installation
+            "/home/deck/.local/bin/fossilize-replay",  # User installation
+            os.path.join(self.steam_path, "fossilize-replay") if self.steam_path else None
+        ]
+        
+        for path in possible_paths:
+            if path and os.path.exists(path):
                 return path
                 
         return None
