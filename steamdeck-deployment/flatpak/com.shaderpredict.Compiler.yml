@@ -1,0 +1,106 @@
+app-id: com.shaderpredict.Compiler
+runtime: org.kde.Platform
+runtime-version: '6.5'
+sdk: org.kde.Sdk
+command: shader-predict-gui
+
+# Finish args for permissions and system access
+finish-args:
+  # X11 and Wayland support
+  - --socket=x11
+  - --socket=wayland
+  - --share=ipc
+  
+  # GPU access for shader compilation and monitoring
+  - --device=dri
+  - --device=all
+  
+  # Network access for P2P functionality
+  - --share=network
+  
+  # D-Bus access for system integration
+  - --socket=system-bus
+  - --socket=session-bus
+  - --talk-name=org.freedesktop.Flatpak
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --talk-name=com.valve.Steam
+  
+  # Filesystem access (limited to necessary paths)
+  - --filesystem=~/.config/shader-predict-compile:create
+  - --filesystem=~/.cache/shader-predict-compile:create
+  - --filesystem=~/.local/share/shader-predict-compile:create
+  - --filesystem=~/.local/share/Steam:ro
+  - --filesystem=/tmp/shader-predict-compile:create
+  
+  # Environment variables
+  - --env=FLATPAK_MODE=1
+  - --env=QT_QPA_PLATFORM=xcb
+  - --env=SHADER_PREDICT_FLATPAK=1
+  
+  # System info access
+  - --filesystem=/sys/class/thermal:ro
+  - --filesystem=/sys/class/hwmon:ro
+  - --filesystem=/sys/class/power_supply:ro
+  - --filesystem=/proc/meminfo:ro
+  - --filesystem=/proc/cpuinfo:ro
+  
+  # Steam Deck specific
+  - --env=STEAMDECK_MODE=auto-detect
+  - --env=THERMAL_MONITORING=1
+
+modules:
+  # Python and dependencies
+  - name: python3-modules
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app --no-deps -r requirements.txt
+    sources:
+      - type: file
+        path: requirements.txt
+        
+  # PyQt6 for GUI
+  - name: python3-pyqt6
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app PyQt6 PyQt6-WebEngine
+        
+  # Main application
+  - name: shader-predict-compile
+    buildsystem: simple
+    build-commands:
+      # Copy application files
+      - install -Dm755 src/*.py /app/lib/shader-predict-compile/
+      - install -Dm755 scripts/*.sh /app/lib/shader-predict-compile/scripts/
+      - install -Dm644 config/*.json /app/share/shader-predict-compile/config/
+      
+      # Install main executable
+      - install -Dm755 flatpak-launcher.sh /app/bin/shader-predict-gui
+      
+      # Desktop integration
+      - install -Dm644 com.shaderpredict.Compiler.desktop /app/share/applications/com.shaderpredict.Compiler.desktop
+      - install -Dm644 com.shaderpredict.Compiler.metainfo.xml /app/share/metainfo/com.shaderpredict.Compiler.metainfo.xml
+      - install -Dm644 icons/shader-predict-128.png /app/share/icons/hicolor/128x128/apps/com.shaderpredict.Compiler.png
+      - install -Dm644 icons/shader-predict-256.png /app/share/icons/hicolor/256x256/apps/com.shaderpredict.Compiler.png
+      
+    sources:
+      - type: dir
+        path: ../../
+        
+  # Steam integration module
+  - name: steam-integration
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 steam-hooks/*.py /app/lib/shader-predict-compile/steam/
+    sources:
+      - type: dir
+        path: ../steam-integration/
+
+# Cleanup unnecessary files
+cleanup:
+  - /include
+  - /lib/debug
+  - /lib/pkgconfig
+  - /share/doc
+  - /share/man
+  - '*.la'
+  - '*.a'
