@@ -16,7 +16,7 @@ This release represents a **complete architectural overhaul** consolidating 100+
 
 ### ✨ **Major Cleanup Achievements**
 - **🗂️ Unified Architecture**: Consolidated 30+ README files into this single comprehensive guide
-- **⚙️ Single Installation Script**: Combined 20+ duplicate installers into one robust `install.sh`
+- **⚙️ Single Installation Script**: Combined 20+ duplicate installers into one robust `install_user.sh`
 - **🧠 Consolidated ML System**: Merged multiple ML implementations into `src/ml/unified_ml_predictor.py`
 - **🌡️ Unified Thermal Management**: Single thermal system in `src/steam/thermal_manager.py`
 - **📦 Streamlined Packaging**: Reduced 10+ systemd services to 3 core services
@@ -27,18 +27,18 @@ This release represents a **complete architectural overhaul** consolidating 100+
 
 **One-line installation for all platforms:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install_user.sh | bash
 ```
 
 **Or download and inspect first (recommended):**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh -o install.sh
-chmod +x install.sh && ./install.sh
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install_user.sh -o install_user.sh
+chmod +x install_user.sh && ./install_user.sh
 ```
 
 **For Steam Deck with optimizations:**
 ```bash
-./install.sh --steam-deck-optimized
+./install_user.sh --steam-deck-optimized
 ```
 
 ---
@@ -223,7 +223,7 @@ shader-predict-compile --thermal
 ```bash
 # All previous installation issues have been fixed in v2.0
 # If you encounter any problems, run:
-./install.sh --debug --force
+./install_user.sh --debug --force
 ```
 
 **Performance Issues:**
@@ -303,7 +303,7 @@ git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Com
 cd -Machine-Learning-Shader-Prediction-Compiler
 
 # Install with unified installer
-./install.sh --dev-mode
+./install_user.sh --dev-mode
 
 # Or manual setup
 python3 -m venv venv
@@ -374,7 +374,7 @@ Clean removal is simple:
 uninstall-shader-predict-compile
 
 # Manual uninstall
-/opt/shader-predict-compile/uninstall.sh
+~/.local/shader-predict-compile/uninstall.sh
 
 # Complete removal including caches
 shader-predict-compile --purge-all
