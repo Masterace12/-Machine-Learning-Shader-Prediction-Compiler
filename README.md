@@ -5,6 +5,10 @@
 [![Steam Deck](https://img.shields.io/badge/Steam%20Deck-Optimized-blue?logo=steam&logoColor=white)](https://store.steampowered.com/steamdeck)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Rust](https://img.shields.io/badge/Rust-1.75+-orange?logo=rust&logoColor=white)](https://rustlang.org)
+[![ONNX](https://img.shields.io/badge/ONNX-ML%20Runtime-green?logo=onnx&logoColor=white)](https://onnxruntime.ai/)
+[![Vulkan](https://img.shields.io/badge/Vulkan-Graphics%20API-red?logo=vulkan&logoColor=white)](https://vulkan.org/)
+[![Performance](https://img.shields.io/badge/Performance-10x%20Faster-brightgreen)](#-performance-data)
 [![SteamOS](https://img.shields.io/badge/SteamOS-Compatible-green)](https://store.steampowered.com/steamos)
 
 ---
