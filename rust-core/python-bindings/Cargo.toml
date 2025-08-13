@@ -1,0 +1,31 @@
+[package]
+name = "shader-predict-python"
+version = "3.0.0"
+edition = "2021"
+description = "Python bindings for the Rust-based shader prediction system"
+authors = ["ML Shader Prediction Compiler Team"]
+
+[lib]
+name = "shader_predict_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+# Workspace dependencies
+pyo3 = { workspace = true }
+numpy = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+
+# External dependencies
+pyo3-asyncio = { version = "0.20", features = ["tokio-runtime"] }
+num_cpus = "1.16"
+
+# Local crate dependencies
+ml-engine = { path = "../ml-engine" }
+vulkan-cache = { path = "../vulkan-cache" }
+
+[features]
+default = ["extension-module"]
+extension-module = ["pyo3/extension-module"]

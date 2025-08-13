@@ -1,0 +1,40 @@
+[package]
+name = "ml-engine"
+version = "3.0.0"
+edition = "2021"
+description = "High-performance ML inference engine for shader prediction"
+authors = ["ML Shader Prediction Compiler Team"]
+
+[dependencies]
+# Workspace dependencies
+ort = { workspace = true }
+ndarray = { workspace = true }
+serde = { workspace = true }
+bincode = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+rayon = { workspace = true }
+dashmap = { workspace = true }
+lru = { workspace = true }
+parking_lot = { workspace = true }
+packed_simd2 = { workspace = true }
+
+# Local dependencies
+half = "2.3"
+smallvec = "1.11"
+
+[dev-dependencies]
+criterion = { workspace = true }
+tokio-test = "0.4"
+
+[[bench]]
+name = "inference_performance"
+harness = false
+
+[features]
+default = ["simd", "gpu-acceleration"]
+simd = ["packed_simd2"]
+gpu-acceleration = ["ort/tensorrt"]
+quantization = []

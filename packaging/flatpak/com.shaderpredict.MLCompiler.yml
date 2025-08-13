@@ -1,0 +1,90 @@
+app-id: com.shaderpredict.MLCompiler
+runtime: org.kde.Platform
+runtime-version: '6.6'
+sdk: org.kde.Sdk
+command: ml-shader-predictor-launcher
+
+# Optimized for Steam Deck deployment
+separate-locales: false
+build-options:
+  cflags: -O2 -fstack-protector-strong
+  cxxflags: -O2 -fstack-protector-strong
+
+# Steam Deck optimized permissions
+finish-args:
+  # Display protocols
+  - --socket=x11
+  - --socket=wayland
+  - --share=ipc
+  
+  # Hardware access for thermal monitoring and GPU
+  - --device=dri
+  - --device=shm
+  - --allow=bluetooth
+  
+  # Network for P2P shader sharing
+  - --share=network
+  
+  # System integration
+  - --socket=system-bus
+  - --socket=session-bus
+  - --talk-name=org.freedesktop.Flatpak
+  - --talk-name=org.kde.StatusNotifierWatcher  
+  - --talk-name=com.valve.Steam
+  - --talk-name=org.freedesktop.PowerManagement
+  - --talk-name=org.freedesktop.UPower
+  - --talk-name=org.freedesktop.NetworkManager
+  
+  # Application directories
+  - --filesystem=~/.config/shader-predict-compile:create
+  - --filesystem=~/.cache/shader-predict-compile:create
+  - --filesystem=~/.local/share/shader-predict-compile:create
+  
+  # Steam integration paths
+  - --filesystem=~/.local/share/Steam:ro
+  - --filesystem=~/.steam:ro
+  - --filesystem=~/.local/share/Steam/steamapps/shadercache:rw
+  - --filesystem=~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/shadercache:rw
+  
+  # Steam Deck system monitoring (read-only)
+  - --filesystem=/sys/class/thermal:ro
+  - --filesystem=/sys/class/hwmon:ro
+  - --filesystem=/sys/class/power_supply:ro
+  - --filesystem=/sys/devices/virtual/dmi:ro
+  - --filesystem=/sys/class/dmi:ro
+  
+  # Temporary directories
+  - --filesystem=/tmp:rw
+
+modules:
+  - name: python3-dependencies
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app --no-deps numpy>=1.19.0 scikit-learn>=1.0.0 psutil>=5.7.0 requests>=2.25.0
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/numpy-1.24.3.tar.gz
+        sha256: ab344f1bf21f140adab8e47fdbc7c35a477dc01408791f8ba00d018dd840a17d
+        
+  - name: ml-shader-predictor
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/bin /app/share/applications /app/share/metainfo
+      - cp -r src/* /app/
+      - cp -r security /app/ || true
+      - cp -r p2p /app/ || true
+      - cp -r qa-framework /app/ || true
+      - install -Dm755 packaging/flatpak/ml-shader-predictor-launcher /app/bin/
+      - install -Dm644 packaging/flatpak/com.shaderpredict.MLCompiler.desktop /app/share/applications/
+      - install -Dm644 packaging/flatpak/com.shaderpredict.MLCompiler.metainfo.xml /app/share/metainfo/
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - "*.md"
+          - "*.sh"
+          - build-*
+          - steamdeck-*
+          - enhanced-*
+          - optimized-*

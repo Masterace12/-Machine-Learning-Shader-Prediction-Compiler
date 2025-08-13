@@ -1,0 +1,28 @@
+[package]
+name = "steamdeck-optimizer"
+version = "3.0.0"
+edition = "2021"
+description = "Steam Deck specific optimizations for shader compilation"
+authors = ["ML Shader Prediction Compiler Team"]
+
+[dependencies]
+# Workspace dependencies
+sysinfo = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+parking_lot = { workspace = true }
+core_affinity = { workspace = true }
+
+# Additional dependencies
+procfs = "0.15"
+hwmon = "0.8"
+
+[features]
+default = ["thermal-management", "power-management"]
+thermal-management = []
+power-management = []
+debug-monitoring = []
