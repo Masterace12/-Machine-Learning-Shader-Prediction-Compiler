@@ -18,8 +18,8 @@ NC='\033[0m' # No Color
 # Script configuration - MUST match install.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 PROJECT_NAME="shader-predict-compile"
-GITHUB_REPO="https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler"
-GITHUB_API="https://api.github.com/repos/Masterace12/-Machine-Learning-Shader-Prediction-Compiler"
+GITHUB_REPO="https://github.com/Masterace12/Machine-Learning-Shader-Prediction-Compiler"
+GITHUB_API="https://api.github.com/repos/Masterace12/Machine-Learning-Shader-Prediction-Compiler"
 
 # Installation paths - MUST match install.sh exactly
 INSTALL_DIR="${HOME}/.local/${PROJECT_NAME}"
@@ -441,31 +441,25 @@ EOF
     success "Backup created at: $BACKUP_DIR"
 }
 
-# Download latest version
+# Download latest version (FIXED: directory creation logic)
 download_latest() {
     log "Downloading latest version..."
     
-    # Ensure parent directory exists first
-    mkdir -p "$(dirname "$DOWNLOAD_DIR")"
-    mkdir -p "$DOWNLOAD_DIR" || {
-        error "Failed to create download directory: $DOWNLOAD_DIR"
+    # Create temporary directory first
+    mkdir -p "$TEMP_DIR" || {
+        error "Failed to create temporary directory: $TEMP_DIR"
         return 1
     }
     
     if [[ "$DRY_RUN" == "true" ]]; then
-        debug "Would download from: $GITHUB_REPO"
+        debug "Would download from: $GITHUB_REPO to $DOWNLOAD_DIR"
         return 0
-    fi
-    
-    # Verify download directory exists before cloning
-    if [[ ! -d "$DOWNLOAD_DIR" ]]; then
-        error "Download directory does not exist: $DOWNLOAD_DIR"
-        return 1
     fi
     
     # Clone or download the repository
     if command -v git &>/dev/null; then
         log "Using git to fetch latest version..."
+        # Clone directly to download dir (git will create it)
         git clone --depth 1 "$GITHUB_REPO" "$DOWNLOAD_DIR" 2>/dev/null || {
             error "Failed to clone repository"
             return 1
@@ -475,10 +469,16 @@ download_latest() {
         return 1
     fi
     
+    # Verify download succeeded
+    if [[ ! -d "$DOWNLOAD_DIR" ]]; then
+        error "Download failed - directory not created"
+        return 1
+    fi
+    
     success "Downloaded latest version"
 }
 
-# Update files
+# Update files (FIXED: directory verification)
 update_files() {
     log "Updating files..."
     

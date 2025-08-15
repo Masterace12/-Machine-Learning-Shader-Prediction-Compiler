@@ -1,65 +1,31 @@
 # Steam Deck ML Shader Prediction Compiler - Legacy Requirements
-# For Python 3.8-3.12 compatibility
+# Python 3.8-3.12 compatible dependencies
 
-# ==============================================================================
-# CORE DEPENDENCIES (Python 3.8-3.12)
-# ==============================================================================
+# Core dependencies
+numpy>=1.24.0,<2.0.0
+scikit-learn>=1.3.0,<1.6.0
+scipy>=1.10.0,<2.0.0
+joblib>=1.3.0,<2.0.0
 
-# Essential ML and Data Science - Legacy compatible versions
-numpy>=1.21.0,<2.0.0         # NumPy 1.x for older Python versions
-scikit-learn>=1.3.0,<1.5.0   # Stable version for older Python
-scipy>=1.8.0,<2.0.0          # Compatible with NumPy 1.x
-joblib>=1.3.0,<1.5.0         # Stable version
+# Lightweight ML
+lightgbm>=4.0.0,<5.0.0
 
-# Lightweight ML alternative
-lightgbm>=4.0.0,<4.5.0       # Version compatible with older Python
-
-# Performance optimization dependencies (reduced feature set)
-msgpack>=1.0.5               # Fast serialization
-msgpack-numpy>=0.4.7        # NumPy array serialization
-lz4>=4.0.0,<5.0.0           # Fast compression
-# numba - Skip for older Python versions (compatibility issues)
-# zstandard - Skip for older Python versions
+# Performance
+msgpack>=1.0.8
+lz4>=4.0.0,<5.0.0
+zstandard>=0.21.0
 
 # System Integration
-psutil>=5.9.0,<6.1.0         # Memory and process monitoring
-requests>=2.31.0,<3.0.0      # HTTP requests
-PyYAML>=6.0.1,<7.0          # Configuration files
+psutil>=5.9.0,<6.1.0
+requests>=2.31.0,<3.0.0
+PyYAML>=6.0.1,<7.0
 
-# Async and Performance
-aiofiles>=23.0.0,<24.0.0     # Async file operations
+# Async operations
+aiofiles>=23.0.0,<24.0.0
 
 # Security
-cryptography>=41.0.0,<43.0.0 # Security features
+cryptography>=41.0.0,<43.0.0
 
 # Linux/Steam Deck specific
-pyudev>=0.24.0; platform_system=="Linux"     # Hardware detection
-dbus-python>=1.3.0,<2.0.0; platform_system=="Linux"  # Steam integration
-py-cpuinfo>=9.0.0,<10.0.0     # CPU information for hardware fingerprinting
-
-# ==============================================================================
-# OPTIONAL DEPENDENCIES
-# ==============================================================================
-
-# [dev] Development and Testing
-pytest>=7.4.0; extra == "dev"
-pytest-cov>=4.1.0; extra == "dev"
-pytest-asyncio>=0.21.0; extra == "dev"
-black>=23.0.0; extra == "dev"
-mypy>=1.5.0; extra == "dev"
-
-# [monitoring] Performance monitoring
-py-spy>=0.3.14; extra == "monitoring"
-memory-profiler>=0.61.0; extra == "monitoring"
-
-# ==============================================================================
-# INSTALLATION NOTES
-# ==============================================================================
-# 
-# This file is for Python 3.8-3.12 compatibility
-# For Python 3.13+, use requirements-optimized.txt
-# 
-# Features not available in legacy mode:
-#   - SIMD optimizations (numba)
-#   - zstandard compression
-#   - Some performance optimizations
+pyudev>=0.24.0; platform_system=="Linux"
+dbus-python>=1.3.0,<2.0.0; platform_system=="Linux"

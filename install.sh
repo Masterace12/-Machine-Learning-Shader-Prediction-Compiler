@@ -55,8 +55,8 @@ ENABLE_AUTOSTART=false
 # Enhanced auto-installation options
 AUTO_INSTALL_DEPENDENCIES=true
 FALLBACK_TO_MINIMAL=true
-GITHUB_REPO="https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler"
-GITHUB_RAW="https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main"
+GITHUB_REPO="https://github.com/Masterace12/Machine-Learning-Shader-Prediction-Compiler"
+GITHUB_RAW="https://raw.githubusercontent.com/Masterace12/Machine-Learning-Shader-Prediction-Compiler/main"
 
 # Rollback and checkpoint system
 CHECKPOINT_FILE="${CACHE_DIR}/install_checkpoints.json"
@@ -198,7 +198,7 @@ show_error_recovery_options() {
     echo -e "  2. Run with --verbose for detailed output"
     echo -e "  3. Try manual dependency installation first"
     echo -e "  4. Check system requirements and available disk space"
-    echo -e "  5. Report issue at: https://github.com/user/shader-predict-compile/issues"
+    echo -e "  5. Report issue at: ${GITHUB_REPO}/issues"
     echo
     
     # Phase-specific recovery suggestions
@@ -391,8 +391,8 @@ download_requirements_file() {
     else
         warn "Failed to download requirements file from GitHub"
         
-        # Check if we have a requirements file in Documents
-        local docs_req="${HOME}/Documents/enchanced requirements.txt"
+        # Check if we have a requirements file in Documents (FIXED: typo)
+        local docs_req="${HOME}/Documents/enhanced requirements.txt"
         if [[ -f "$docs_req" ]]; then
             log "Using requirements file from Documents folder"
             cp "$docs_req" "$requirements_file"
@@ -1019,7 +1019,7 @@ install_python_dependencies() {
     
     local requirements_file
     
-    # Choose the appropriate requirements file based on Python version
+    # Choose the appropriate requirements file based on Python version (FIXED: proper error handling)
     if python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 13) else 1)" 2>/dev/null; then
         requirements_file="${SCRIPT_DIR}/requirements-optimized.txt"
         debug "Using optimized requirements for Python 3.13+"
@@ -1028,7 +1028,7 @@ install_python_dependencies() {
         debug "Using legacy requirements for Python ${python_version}"
     fi
     
-    # Ensure requirements file exists
+    # Ensure requirements file exists with better fallback
     if [[ ! -f "$requirements_file" ]]; then
         local filename=$(basename "$requirements_file")
         local temp_req="${CACHE_DIR}/${filename}"
@@ -1036,11 +1036,9 @@ install_python_dependencies() {
         if ! wget -q "${GITHUB_RAW}/${filename}" -O "$temp_req" 2>/dev/null; then
             warn "Could not download ${filename}, creating fallback"
             create_compatible_requirements "$temp_req"
-            requirements_file="$temp_req"
-        else
-            requirements_file="$temp_req"
-            debug "Downloaded ${filename} from GitHub"
         fi
+        requirements_file="$temp_req"
+        debug "Using requirements file: $requirements_file"
     fi
     
     # Install build tools if needed and not in user-space mode
@@ -1840,7 +1838,7 @@ EOF
     debug "Installation report saved to: $report_file"
 }
 
-# Show completion message
+# Show completion message (FIXED: documentation URLs)
 show_completion_message() {
     local install_end_time=$(date +%s)
     local install_duration=$((install_end_time - INSTALL_START_TIME))
@@ -1889,8 +1887,8 @@ show_completion_message() {
         echo
     fi
     
-    echo -e "${PURPLE}📖 Documentation:${NC} https://github.com/user/shader-predict-compile/wiki"
-    echo -e "${PURPLE}🐛 Issues:${NC} https://github.com/user/shader-predict-compile/issues"
+    echo -e "${PURPLE}📖 Documentation:${NC} ${GITHUB_REPO}/wiki"
+    echo -e "${PURPLE}🐛 Issues:${NC} ${GITHUB_REPO}/issues"
     echo
     echo -e "${CYAN}Happy shader compiling! 🎮${NC}"
 }
