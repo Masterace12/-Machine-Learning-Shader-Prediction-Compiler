@@ -113,74 +113,23 @@ These issues occur because games compile shaders (graphics rendering instruction
 
 ## 📦 Installation
 
-### Quick Installation (Recommended) ✅ FULLY TESTED
+### One-Command Installation ✅ FULLY TESTED
 
-**For Steam Deck (No Root Required):**
-```bash
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash -s -- --user-space --enable-autostart
-```
-
-**For Steam Deck with Developer Mode (Enhanced Performance):**
-```bash
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash --enable-autostart
-```
-
-### Safe Installation (Download First) - Recommended for Security
+Copy and paste this single command to install on your Steam Deck:
 
 ```bash
-# Download and verify the installer
-wget https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh
-
-# Make it executable
-chmod +x install.sh
-
-# Run installation with full ML features (user-space mode)
-./install.sh --user-space --enable-autostart
-
-# Or for maximum performance (requires password for build tools)
-./install.sh --enable-autostart
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install_fixed.sh | bash -s -- --user-space --enable-autostart
 ```
 
-### What the Installer Does ✅ VERIFIED
+This command will:
+- ✅ **Automatically detect** your Steam Deck model (LCD/OLED)
+- ✅ **Install all dependencies** including Python, LightGBM, and ML libraries
+- ✅ **Set up background services** for automatic shader optimization
+- ✅ **Enable thermal management** to prevent overheating
+- ✅ **Integrate with Steam** for seamless gaming
+- ✅ **Work without root access** (safe for standard Steam Deck users)
 
-✅ **Automatic Dependency Resolution**
-- Installs Python 3.8+ virtual environment
-- Installs LightGBM, NumPy, scikit-learn, and all ML dependencies
-- Handles Steam Deck's externally-managed Python environment safely
-
-✅ **Rust Performance Components** (Optional)
-- Auto-installs Rust toolchain if not present
-- Compiles high-performance components for 3-10x speedup
-- Graceful fallback to Python-only mode if compilation fails
-
-✅ **Steam Integration**
-- Creates systemd user services for background operation
-- Integrates with Steam Gaming Mode via D-Bus
-- Automatic shader detection and pre-compilation
-
-✅ **Thermal & Power Management**
-- Enhanced Steam Deck hardware detection (LCD vs OLED with multiple fallback methods)
-- Thermal-aware compilation scheduling
-- Battery-conscious operation modes
-
-✅ **Recent Improvements (v2.1.0)**
-- Fixed critical GitHub URL issues preventing downloads
-- Enhanced Steam Deck model detection with robust fallbacks
-- Improved error handling and recovery mechanisms
-- Comprehensive installation testing and validation
-- Better phase tracking and progress reporting
-
-### Installation Options
-
-| Flag | Description | When to Use |
-|------|-------------|-------------|
-| `--user-space` | Install without root permissions | Fresh Steam Deck, no Developer Mode |
-| `--enable-autostart` | Auto-start services after installation | Want automatic operation |
-| `--verbose` | Show detailed installation progress | Troubleshooting or monitoring |
-| `--force` | Force clean reinstallation | Fixing corrupted installation |
-| `--offline` | Use bundled dependencies | Limited internet connectivity |
-| `--skip-steam` | Skip Steam integration | Non-gaming use cases |
-| `--dev` | Install development tools | Contributing to the project |
+The installation takes 5-10 minutes and includes comprehensive error handling with automatic rollback if anything goes wrong.
 
 ### Verification
 
@@ -460,6 +409,38 @@ systemctl --user status steam-monitor.service
 - **No network communication** except for updates
 - **Open source** - audit the code yourself
 - **User-controlled** - easy to disable or uninstall
+
+---
+
+## 🔧 Advanced Installation Options
+
+For users who need custom installation options, you can download the installer first and use additional flags:
+
+```bash
+# Download the installer
+wget https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install_fixed.sh
+chmod +x install_fixed.sh
+
+# Basic installation (same as one-command above)
+./install_fixed.sh --user-space --enable-autostart
+
+# Additional flags you can add:
+./install_fixed.sh --user-space --enable-autostart --verbose    # Show detailed progress
+./install_fixed.sh --user-space --enable-autostart --force     # Force clean reinstall
+./install_fixed.sh --user-space --enable-autostart --dev       # Install development tools
+```
+
+### Available Installation Flags
+
+| Flag | Description | When to Use |
+|------|-------------|-------------|
+| `--user-space` | Install without root permissions | Recommended for all Steam Deck users |
+| `--enable-autostart` | Auto-start services after installation | For automatic operation |
+| `--verbose` | Show detailed installation progress | When troubleshooting |
+| `--force` | Force clean reinstallation | When fixing corrupted installation |
+| `--dev` | Install development tools | For developers contributing to project |
+| `--skip-steam` | Skip Steam integration | For non-gaming use cases |
+| `--offline` | Use bundled dependencies | When internet is limited |
 
 ---
 
