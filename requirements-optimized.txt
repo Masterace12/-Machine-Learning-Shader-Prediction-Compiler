@@ -27,7 +27,7 @@ PyYAML>=6.0.1,<7.0            # Fixed: security patch version
 
 # Async and Performance
 aiofiles>=24.0.0             # Async file operations
-lz4>=4.5.0                   # Fast compression for cache (fallback)
+lz4>=4.0.0,<5.0.0            # Fast compression for cache (fallback)
 
 # Security (with proper version constraints)
 cryptography>=41.0.0,<43.0.0  # Fixed: updated for security

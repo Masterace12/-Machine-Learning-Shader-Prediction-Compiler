@@ -66,7 +66,7 @@ INSTALL_LOCK="${CACHE_DIR}/install.lock"
 ERROR_RECOVERY_FILE="${CACHE_DIR}/error_recovery.log"
 
 # Installation phases for progress tracking
-TOTAL_PHASES=12
+TOTAL_PHASES=13
 CURRENT_PHASE=0
 PHASE_NAMES=(
     "Initialization"
@@ -2070,31 +2070,31 @@ main() {
     install_python_dependencies
     install_offline_dependencies
     
-    update_phase 6.5  # Rust Components
+    update_phase 7  # Rust Components
     setup_rust_components
     
-    update_phase 7  # File Installation
+    update_phase 8  # File Installation
     install_optimized_files
     
-    update_phase 8  # Configuration
+    update_phase 9  # Configuration
     create_config_files
     
-    update_phase 9  # Service Setup
+    update_phase 10  # Service Setup
     setup_steam_integration
     create_systemd_user_services
     
-    update_phase 10  # CLI Tools
+    update_phase 11  # CLI Tools
     create_desktop_entry
     create_cli_tools
     
-    update_phase 11  # Validation
+    update_phase 12  # Validation
     if [[ "$SKIP_VALIDATION" != "true" ]]; then
         run_system_tests
     else
         warn "Skipping system validation"
     fi
     
-    update_phase 12  # Finalization
+    update_phase 13  # Finalization
     generate_report
     
     # Start services if autostart is enabled
