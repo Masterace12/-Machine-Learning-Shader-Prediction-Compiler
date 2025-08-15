@@ -25,6 +25,12 @@ try:
 except ImportError:
     HAS_LZ4 = False
     lz4 = None
+try:
+    import zstandard as zstd
+    HAS_ZSTD = True
+except ImportError:
+    HAS_ZSTD = False
+    zstd = None
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Set
 from dataclasses import dataclass, asdict
@@ -211,9 +217,17 @@ class OptimizedShaderCache:
         self._current_memory_mb = 0
         self._memory_pressure = False
         
-        # Compression
+        # Compression (prefer zstd > lz4 > zlib)
         self.enable_compression = enable_compression
-        self.compression_level = 3  # LZ4 compression level
+        if HAS_ZSTD:
+            self.compressor = zstd.ZstdCompressor(level=3, threads=2)
+            self.decompressor = zstd.ZstdDecompressor()
+            self.compression_type = 'zstd'
+        elif HAS_LZ4:
+            self.compression_level = 3
+            self.compression_type = 'lz4'
+        else:
+            self.compression_type = 'zlib'
         
         # Bloom filter for quick existence checks
         self.bloom_filter = CompressedBloomFilter(expected_items=50000)
@@ -335,27 +349,42 @@ class OptimizedShaderCache:
         self.logger.info(f"Memory reduced to {self._current_memory_mb:.1f}MB")
     
     def _compress_bytecode(self, bytecode: bytes) -> Tuple[bytes, float]:
-        """Compress shader bytecode using LZ4"""
-        if not self.enable_compression or len(bytecode) < 1024 or not HAS_LZ4:
+        """Compress shader bytecode with best available algorithm"""
+        if not self.enable_compression or len(bytecode) < 1024:
             return bytecode, 1.0
         
         try:
-            compressed = lz4.frame.compress(
-                bytecode,
-                compression_level=self.compression_level
-            )
+            if HAS_ZSTD:
+                # Zstandard offers best compression ratio and speed
+                compressed = self.compressor.compress(bytecode)
+            elif HAS_LZ4:
+                compressed = lz4.frame.compress(
+                    bytecode,
+                    compression_level=self.compression_level
+                )
+            else:
+                compressed = zlib.compress(bytecode, level=6)
+            
             ratio = len(bytecode) / len(compressed)
-            return compressed, ratio
+            # Only use compression if it saves > 10%
+            if ratio > 1.1:
+                return compressed, ratio
+            return bytecode, 1.0
         except Exception:
             return bytecode, 1.0
     
     def _decompress_bytecode(self, compressed: bytes, ratio: float) -> bytes:
         """Decompress shader bytecode"""
-        if not self.enable_compression or ratio == 1.0 or not HAS_LZ4:
+        if not self.enable_compression or ratio <= 1.0:
             return compressed
         
         try:
-            return lz4.frame.decompress(compressed)
+            if HAS_ZSTD:
+                return self.decompressor.decompress(compressed)
+            elif HAS_LZ4:
+                return lz4.frame.decompress(compressed)
+            else:
+                return zlib.decompress(compressed)
         except Exception:
             return compressed
     
@@ -500,24 +529,54 @@ class OptimizedShaderCache:
         return None
     
     def _put_to_cold_storage(self, entry: ShaderCacheEntry):
-        """Store entry in SQLite database"""
+        """Store entry in SQLite database with batched writes"""
+        if not hasattr(self, '_write_batch'):
+            self._write_batch = []
+            self._batch_lock = threading.Lock()
+            self._last_batch_flush = time.time()
+        
+        with self._batch_lock:
+            self._write_batch.append(entry)
+            
+            # Flush batch if it's large enough or time has passed
+            if len(self._write_batch) >= 50 or \
+               (time.time() - self._last_batch_flush) > 1.0:
+                self._flush_write_batch()
+    
+    def _flush_write_batch(self):
+        """Flush batched writes to database"""
+        if not self._write_batch:
+            return
+        
         try:
             with self.db_pool.get_connection() as conn:
-                conn.execute('''
+                # Use transaction for batch insert
+                conn.execute('BEGIN TRANSACTION')
+                
+                batch_data = [
+                    (entry.shader_hash, entry.game_id, entry.shader_type,
+                     entry.bytecode, entry.compilation_time, entry.access_count,
+                     entry.last_access, entry.size_bytes, entry.compression_ratio,
+                     entry.priority, time.time())
+                    for entry in self._write_batch
+                ]
+                
+                conn.executemany('''
                     INSERT OR REPLACE INTO shader_cache
                     (shader_hash, game_id, shader_type, bytecode, compilation_time,
                      access_count, last_access, size_bytes, compression_ratio,
                      priority, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    entry.shader_hash, entry.game_id, entry.shader_type,
-                    entry.bytecode, entry.compilation_time, entry.access_count,
-                    entry.last_access, entry.size_bytes, entry.compression_ratio,
-                    entry.priority, time.time()
-                ))
-                conn.commit()
+                ''', batch_data)
+                
+                conn.execute('COMMIT')
+                
+                self.logger.debug(f"Flushed {len(self._write_batch)} entries to cold storage")
+                self._write_batch.clear()
+                self._last_batch_flush = time.time()
         except Exception as e:
-            self.logger.error(f"Cold storage write error: {e}")
+            self.logger.error(f"Batch write error: {e}")
+            conn.execute('ROLLBACK')
     
     def _rebalance_caches(self):
         """Rebalance cache tiers based on access patterns"""
@@ -534,18 +593,39 @@ class OptimizedShaderCache:
                     self.warm_cache[key] = entry
     
     def _cleanup_cold_storage(self):
-        """Clean up old entries from cold storage"""
+        """Clean up old entries from cold storage in batches"""
         try:
             with self.db_pool.get_connection() as conn:
-                # Delete entries not accessed in 30 days
+                # Delete entries not accessed in 30 days, batch process
                 cutoff_time = time.time() - (30 * 24 * 3600)
-                conn.execute('''
-                    DELETE FROM shader_cache
+                
+                # First, count how many entries to delete
+                cursor = conn.execute('''
+                    SELECT COUNT(*) FROM shader_cache
                     WHERE last_access < ? AND priority < 5
                 ''', (cutoff_time,))
-                conn.commit()
+                count = cursor.fetchone()[0]
+                
+                if count > 0:
+                    # Delete in batches to avoid locking
+                    batch_size = 100
+                    conn.execute('BEGIN TRANSACTION')
+                    
+                    for i in range(0, count, batch_size):
+                        conn.execute('''
+                            DELETE FROM shader_cache
+                            WHERE shader_hash IN (
+                                SELECT shader_hash FROM shader_cache
+                                WHERE last_access < ? AND priority < 5
+                                LIMIT ?
+                            )
+                        ''', (cutoff_time, batch_size))
+                    
+                    conn.execute('COMMIT')
+                    self.logger.info(f"Cleaned up {count} old cache entries")
         except Exception as e:
             self.logger.error(f"Cold storage cleanup error: {e}")
+            conn.execute('ROLLBACK')
     
     def _record_access_time(self, start_time: float):
         """Record access time for performance metrics"""
