@@ -34,14 +34,25 @@ except ImportError:
     HAS_NUMPY = False
     np = None
 
+# Initialize ML backend flags
+HAS_LIGHTGBM = False
+HAS_SKLEARN = False
+ML_BACKEND = "heuristic"
+StandardScaler = None
+
 # Optimized ML imports - prefer lightweight alternatives
 try:
     # Try LightGBM first (fastest, most memory efficient)
     import lightgbm as lgb
     HAS_LIGHTGBM = True
     ML_BACKEND = "lightgbm"
+    
+    # Import sklearn components for preprocessing even with LightGBM
+    try:
+        from sklearn.preprocessing import StandardScaler
+    except ImportError:
+        StandardScaler = None
 except ImportError:
-    HAS_LIGHTGBM = False
     try:
         # Fallback to scikit-learn with optimized imports
         from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
@@ -51,8 +62,6 @@ except ImportError:
         HAS_SKLEARN = True
         ML_BACKEND = "sklearn"
     except ImportError:
-        HAS_SKLEARN = False
-        ML_BACKEND = "heuristic"
         print("WARNING: No ML backend available. Using heuristic predictor only.")
 
 import psutil
@@ -350,7 +359,7 @@ class OptimizedMLPredictor:
                 with open(scaler_path, 'rb') as f:
                     self._scaler = pickle.load(f)
                 self.logger.info("Loaded optimized scaler")
-            elif HAS_SKLEARN or HAS_LIGHTGBM:
+            elif (HAS_SKLEARN or HAS_LIGHTGBM) and StandardScaler is not None:
                 self._scaler = StandardScaler()
             
             self._models_loaded = True
@@ -364,7 +373,7 @@ class OptimizedMLPredictor:
             # Create fresh models
             self._compilation_time_model = self._create_lightweight_model("regressor")
             self._success_model = self._create_lightweight_model("classifier")
-            if HAS_SKLEARN or HAS_LIGHTGBM:
+            if (HAS_SKLEARN or HAS_LIGHTGBM) and StandardScaler is not None:
                 self._scaler = StandardScaler()
             self._models_loaded = True
     
