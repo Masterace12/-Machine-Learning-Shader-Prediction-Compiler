@@ -2016,11 +2016,11 @@ main() {
     
     # Create installation lock
     mkdir -p "$(dirname "$INSTALL_LOCK")" || {
-        log_error "Failed to create lock directory: $(dirname "$INSTALL_LOCK")"
+        error "Failed to create lock directory: $(dirname "$INSTALL_LOCK")"
         exit 1
     }
     echo $$ > "$INSTALL_LOCK" || {
-        log_error "Failed to create installation lock file: $INSTALL_LOCK"
+        error "Failed to create installation lock file: $INSTALL_LOCK"
         exit 1
     }
     add_cleanup_function "rm -f '$INSTALL_LOCK'"
