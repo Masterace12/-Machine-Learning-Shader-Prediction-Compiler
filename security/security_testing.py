@@ -38,23 +38,23 @@ import subprocess
 import sys
 
 # Import security modules for testing
-from spv_static_analyzer import (
+from .spv_static_analyzer import (
     SPIRVStaticAnalyzer, SecurityThreatLevel, SPIRVAnalysisResult, create_test_analyzer
 )
-from sandbox_executor import (
+from .sandbox_executor import (
     ShaderSandbox, SandboxConfiguration, SecurityLevel, SandboxResult
 )
-from hardware_fingerprint import (
+from .hardware_fingerprint import (
     HardwareFingerprintGenerator, PrivacyMode, FingerprintingLevel
 )
-from privacy_protection import (
+from .privacy_protection import (
     PrivacyProtectionSystem, PrivacyPolicy, PrivacyLevel, create_privacy_system_for_steam_deck
 )
-from access_control import (
+from .access_control import (
     AccessControlSystem, UserRole, Permission, create_steam_deck_access_control
 )
-from security_integration import SecurityIntegrationLayer
-from anticheat_compatibility import (
+from .security_integration import SecurityIntegrationLayer
+from .anticheat_compatibility import (
     AntiCheatCompatibilityChecker, create_steam_deck_anticheat_checker
 )
 

@@ -31,19 +31,19 @@ from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 
 # Security modules
-from spv_static_analyzer import (
+from .spv_static_analyzer import (
     SPIRVStaticAnalyzer, SecurityThreatLevel, SPIRVAnalysisResult
 )
-from sandbox_executor import (
+from .sandbox_executor import (
     ShaderSandbox, SandboxConfiguration, SecurityLevel, ExecutionResult, SandboxResult
 )
-from hardware_fingerprint import (
+from .hardware_fingerprint import (
     HardwareFingerprintGenerator, HardwareFingerprint, PrivacyMode, FingerprintingLevel
 )
-from privacy_protection import (
+from .privacy_protection import (
     PrivacyProtectionSystem, PrivacyPolicy, PrivacyLevel, ConsentType, AnonymizationResult
 )
-from access_control import (
+from .access_control import (
     AccessControlSystem, UserRole, Permission, ReputationAction, QuarantineReason
 )
 
