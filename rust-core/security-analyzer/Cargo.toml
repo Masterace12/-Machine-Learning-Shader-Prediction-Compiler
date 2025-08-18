@@ -24,6 +24,10 @@ spirv-reflect = { workspace = true }
 nix = { workspace = true }
 libc = { workspace = true }
 
+# Additional dependencies
+hex = "0.4"
+tokio = { workspace = true }
+
 [features]
 default = ["spir-v-analysis", "sandboxing"]
 spir-v-analysis = []

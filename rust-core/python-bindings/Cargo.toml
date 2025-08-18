@@ -19,7 +19,6 @@ anyhow = { workspace = true }
 tokio = { workspace = true }
 
 # External dependencies
-pyo3-asyncio = { version = "0.20", features = ["tokio-runtime"] }
 num_cpus = "1.16"
 
 # Local crate dependencies

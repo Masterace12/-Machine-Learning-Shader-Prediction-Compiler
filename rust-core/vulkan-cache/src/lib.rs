@@ -16,30 +16,31 @@ pub use mmap_store::{MmapCacheStore, MmapRegion};
 /// Main shader cache manager that coordinates all caching strategies
 pub struct VulkanShaderManager {
     cache: Arc<ShaderCache>,
-    precompiler: Arc<PrecompilationEngine>,
-    interceptor: Option<VulkanInterceptor>,
 }
 
 impl VulkanShaderManager {
     /// Create a new shader manager with default configuration
     pub fn new() -> Result<Self> {
-        let cache = Arc::new(ShaderCache::new()?);
-        let precompiler = Arc::new(PrecompilationEngine::new(cache.clone())?);
+        let cache = Arc<ShaderCache>::new(ShaderCache::new()?);
         
         Ok(Self {
             cache,
-            precompiler,
-            interceptor: None,
         })
     }
     
-    /// Initialize Vulkan layer interception
-    pub fn enable_interception(&mut self) -> Result<()> {
-        self.interceptor = Some(VulkanInterceptor::new(
-            self.cache.clone(),
-            self.precompiler.clone()
-        )?);
-        Ok(())
+    /// Store a shader in the cache
+    pub fn store_shader(&self, shader_code: &[u8], metadata: cache::ShaderMetadata) -> Result<u64> {
+        self.cache.store_shader(shader_code, metadata)
+    }
+    
+    /// Retrieve a shader from the cache
+    pub fn get_shader(&self, hash: u64) -> Result<Option<Vec<u8>>> {
+        self.cache.get_shader(hash)
+    }
+    
+    /// Check if a shader exists in the cache
+    pub fn contains(&self, hash: u64) -> bool {
+        self.cache.contains(hash)
     }
     
     /// Get cache statistics

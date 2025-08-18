@@ -2,6 +2,8 @@
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+// SIMD support is experimental, use fallback for now
+#[cfg(feature = "simd")]
 use std::simd::{f32x8, f32x4, SimdFloat};
 
 /// Shader features optimized for SIMD operations
@@ -88,9 +90,9 @@ impl ShaderFeatures {
     #[inline(always)]
     pub fn extract_simd_primary(&self) -> f32x8 {
         unsafe {
-            f32x8::from_slice_unaligned(
-                std::slice::from_raw_parts(self as *const _ as *const f32, 8)
-            )
+            let ptr = self as *const _ as *const f32;
+            let slice = std::slice::from_raw_parts(ptr, 8);
+            f32x8::from_slice(slice)
         }
     }
     
@@ -99,11 +101,9 @@ impl ShaderFeatures {
     #[inline(always)]
     pub fn extract_simd_secondary(&self) -> f32x4 {
         unsafe {
-            f32x4::from_slice_unaligned(
-                std::slice::from_raw_parts(
-                    (self as *const _ as *const f32).offset(8), 4
-                )
-            )
+            let ptr = (self as *const _ as *const f32).offset(8);
+            let slice = std::slice::from_raw_parts(ptr, 4);
+            f32x4::from_slice(slice)
         }
     }
     
@@ -117,9 +117,9 @@ impl ShaderFeatures {
         let normalized_primary = (primary - means_primary) / stds_primary;
         
         unsafe {
-            normalized_primary.write_to_slice_unaligned(
-                std::slice::from_raw_parts_mut(self as *mut _ as *mut f32, 8)
-            );
+            let ptr = self as *mut _ as *mut f32;
+            let slice = std::slice::from_raw_parts_mut(ptr, 8);
+            normalized_primary.copy_to_slice(slice);
         }
         
         // Normalize second 4 features
@@ -129,11 +129,9 @@ impl ShaderFeatures {
         let normalized_secondary = (secondary - means_secondary) / stds_secondary;
         
         unsafe {
-            normalized_secondary.write_to_slice_unaligned(
-                std::slice::from_raw_parts_mut(
-                    (self as *mut _ as *mut f32).offset(8), 4
-                )
-            );
+            let ptr = (self as *mut _ as *mut f32).offset(8);
+            let slice = std::slice::from_raw_parts_mut(ptr, 4);
+            normalized_secondary.copy_to_slice(slice);
         }
         
         // Normalize remaining features manually

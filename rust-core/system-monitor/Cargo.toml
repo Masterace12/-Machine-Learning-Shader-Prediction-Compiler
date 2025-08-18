@@ -18,6 +18,7 @@ parking_lot = { workspace = true }
 
 # Additional monitoring dependencies
 procfs = "0.15"
+num_cpus = "1.16"
 
 [features]
 default = ["gpu-monitoring", "thermal-monitoring"]

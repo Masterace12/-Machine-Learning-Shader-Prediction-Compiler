@@ -19,6 +19,7 @@ core_affinity = { workspace = true }
 
 # Additional dependencies
 procfs = "0.15"
+chrono = { version = "0.4", features = ["serde"] }
 # hwmon = "0.8"  # Crate doesn't exist, using sysinfo instead
 
 [features]

@@ -52,8 +52,8 @@ impl RustMLPredictor {
         let features = self.extract_features_from_dict(features_dict)?;
         
         let result = py.allow_threads(|| {
-            pyo3_asyncio::tokio::get_runtime()
-                .block_on(self.engine.predict_compilation_time(&features))
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(self.engine.predict_compilation_time(&features))
         });
         
         result.map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
@@ -70,8 +70,8 @@ impl RustMLPredictor {
         }
         
         let predictions = py.allow_threads(|| {
-            pyo3_asyncio::tokio::get_runtime()
-                .block_on(self.engine.predict_batch(&features_vec))
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(self.engine.predict_batch(&features_vec))
         });
         
         let predictions = predictions
@@ -116,9 +116,9 @@ impl RustMLPredictor {
     }
     
     /// Get prediction metrics and statistics
-    fn get_metrics(&self) -> PyResult<PyDict> {
+    fn get_metrics(&self, py: Python) -> PyResult<Py<PyDict>> {
         let metrics = self.engine.get_metrics();
-        let dict = PyDict::new(Python::acquire_gil().python());
+        let dict = PyDict::new(py);
         
         dict.set_item("cache_hit_rate", metrics.cache_hit_rate)?;
         dict.set_item("total_predictions", metrics.total_predictions)?;
@@ -126,7 +126,7 @@ impl RustMLPredictor {
         dict.set_item("avg_inference_time_ns", metrics.avg_inference_time_ns)?;
         dict.set_item("fallback_usage_rate", metrics.fallback_usage_rate)?;
         
-        Ok(dict.to_object(Python::acquire_gil().python()))
+        Ok(dict.into())
     }
     
     /// Extract shader features from Python dictionary
@@ -194,9 +194,9 @@ impl RustVulkanCache {
     }
     
     /// Get cache statistics
-    fn get_stats(&self) -> PyResult<PyDict> {
+    fn get_stats(&self, py: Python) -> PyResult<Py<PyDict>> {
         let stats = self.manager.get_stats();
-        let dict = PyDict::new(Python::acquire_gil().python());
+        let dict = PyDict::new(py);
         
         dict.set_item("hit_rate", stats.hit_rate)?;
         dict.set_item("total_lookups", stats.total_lookups)?;
@@ -207,7 +207,7 @@ impl RustVulkanCache {
         dict.set_item("warm_tier_size", stats.warm_tier_size)?;
         dict.set_item("cold_tier_size", stats.cold_tier_size)?;
         
-        Ok(dict.to_object(Python::acquire_gil().python()))
+        Ok(dict.into())
     }
 }
 

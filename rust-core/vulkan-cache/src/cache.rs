@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use blake3::Hasher;
 use crate::mmap_store::{MmapCacheStore, CacheTier};
+use zstd;
 
 /// High-performance shader cache with intelligent tier management
 pub struct ShaderCache {
