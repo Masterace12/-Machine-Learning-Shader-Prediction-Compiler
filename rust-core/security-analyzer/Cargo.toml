@@ -1,0 +1,31 @@
+[package]
+name = "security-analyzer"
+version = "3.0.0"
+edition = "2021"
+description = "Security validation and SPIR-V analysis for shader caching"
+authors = ["ML Shader Prediction Compiler Team"]
+
+[dependencies]
+# Workspace dependencies
+ring = { workspace = true }
+ed25519-dalek = { workspace = true }
+blake3 = { workspace = true }
+sha2 = { workspace = true }
+serde = { workspace = true }
+bincode = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+# SPIR-V analysis
+spirv-reflect = { workspace = true }
+
+# Sandboxing (Linux-specific)
+nix = { workspace = true }
+libc = { workspace = true }
+
+[features]
+default = ["spir-v-analysis", "sandboxing"]
+spir-v-analysis = []
+sandboxing = []
+hardware-fingerprinting = []

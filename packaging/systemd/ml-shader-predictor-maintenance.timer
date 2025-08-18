@@ -1,0 +1,17 @@
+[Unit]
+Description=ML Shader Predictor Maintenance Timer
+Documentation=https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler
+Requires=ml-shader-predictor-maintenance.service
+
+[Timer]
+# Run maintenance every 6 hours
+OnCalendar=*:0/6:00
+# Run 5 minutes after boot if missed
+OnBootSec=5min
+# Persistent across reboots
+Persistent=true
+# Randomize start time by up to 1 hour to spread load
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target

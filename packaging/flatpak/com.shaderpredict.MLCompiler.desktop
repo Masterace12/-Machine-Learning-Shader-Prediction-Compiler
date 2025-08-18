@@ -1,0 +1,17 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ML Shader Prediction Compiler
+GenericName=Gaming Performance Optimizer
+Comment=AI-powered shader compilation optimization for Steam Deck and Linux gaming
+Icon=com.shaderpredict.MLCompiler
+Exec=ml-shader-predictor-launcher --gui
+Terminal=false
+Categories=Game;Utility;System;Performance;
+StartupNotify=true
+Keywords=shader;gaming;optimization;steam;performance;ml;ai;steamdeck;
+StartupWMClass=ml-shader-predictor
+
+# Steam Deck specific
+X-Steam-Categories=Gaming;Utility;
+X-Steam-Controller-Support=true

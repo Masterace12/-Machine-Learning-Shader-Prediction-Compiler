@@ -1,0 +1,45 @@
+[package]
+name = "vulkan-cache"
+version = "3.0.0"
+edition = "2021"
+description = "High-performance Vulkan shader cache with memory-mapped storage"
+authors = ["ML Shader Prediction Compiler Team"]
+
+[dependencies]
+# Workspace dependencies
+ash = { workspace = true }
+gpu-allocator = { workspace = true }
+spirv-reflect = { workspace = true }
+memmap2 = { workspace = true }
+parking_lot = { workspace = true }
+dashmap = { workspace = true }
+crossbeam = { workspace = true }
+lru = { workspace = true }
+blake3 = { workspace = true }
+zstd = { workspace = true }
+serde = { workspace = true }
+bincode = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+rayon = { workspace = true }
+
+# Local dependencies
+byteorder = "1.5"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+smallvec = "1.11"
+
+[dev-dependencies]
+criterion = { workspace = true }
+tempfile = "3.8"
+
+# [[bench]]
+# name = "cache_performance"
+# harness = false
+
+[features]
+default = ["fossilize", "dxvk-compat"]
+fossilize = []
+dxvk-compat = []
+debug-shaders = []

@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0-optimized",
+  "hardware_profile": "steamdeck_lcd",
+  "system": {
+    "max_memory_mb": 150,
+    "max_compilation_threads": 4,
+    "enable_async": true,
+    "enable_thermal_management": true
+  },
+  "thermal": {
+    "apu_max": 95.0,
+    "cpu_max": 85.0,
+    "gpu_max": 90.0,
+    "prediction_threshold": 80.0
+  },
+  "ml": {
+    "backend": "lightgbm",
+    "cache_size": 500,
+    "enable_training": true
+  },
+  "cache": {
+    "hot_cache_size": 50,
+    "warm_cache_size": 200,
+    "enable_compression": true
+  }
+}

@@ -1,0 +1,26 @@
+[package]
+name = "system-monitor"
+version = "3.0.0"
+edition = "2021"
+description = "System monitoring and metrics for Steam Deck"
+authors = ["ML Shader Prediction Compiler Team"]
+
+[dependencies]
+# Workspace dependencies
+sysinfo = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+parking_lot = { workspace = true }
+
+# Additional monitoring dependencies
+procfs = "0.15"
+
+[features]
+default = ["gpu-monitoring", "thermal-monitoring"]
+gpu-monitoring = []
+thermal-monitoring = []
+power-monitoring = []
