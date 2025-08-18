@@ -1223,21 +1223,38 @@ setup_rust_components() {
 install_optimized_files() {
     log "Installing optimized system files..."
     
-    # Copy source files
-    if [[ -d "${SCRIPT_DIR}/src" ]]; then
+    # Download and install optimized source files from GitHub
+    log "Downloading optimized source files from GitHub..."
+    local src_archive_url="${GITHUB_REPO}/archive/refs/heads/main.zip"
+    local temp_dir=$(mktemp -d)
+    
+    if curl -fsSL "$src_archive_url" -o "${temp_dir}/source.zip" && \
+       cd "$temp_dir" && \
+       unzip -q source.zip && \
+       [[ -d "*Machine-Learning-Shader-Prediction-Compiler-main/src" ]]; then
+        cp -r *Machine-Learning-Shader-Prediction-Compiler-main/src "${INSTALL_DIR}/"
+        success "Optimized source files downloaded and installed"
+    elif [[ -d "${SCRIPT_DIR}/src" ]]; then
+        # Fallback to local source files
         cp -r "${SCRIPT_DIR}/src" "${INSTALL_DIR}/"
-        debug "Source files copied"
+        debug "Local source files copied"
+    else
+        warn "No source files available - system will work with limited functionality"
     fi
     
-    # Copy or create main script
-    if [[ -f "${SCRIPT_DIR}/optimized_main.py" ]]; then
-        cp "${SCRIPT_DIR}/optimized_main.py" "${INSTALL_DIR}/main.py"
+    # Cleanup temp directory
+    rm -rf "$temp_dir" 2>/dev/null || true
+    
+    # Download and install optimized main script from GitHub
+    local optimized_main_url="${GITHUB_RAW}/main.py"
+    if curl -fsSL "$optimized_main_url" -o "${INSTALL_DIR}/main.py"; then
         chmod +x "${INSTALL_DIR}/main.py"
-        debug "Main script installed"
+        success "Optimized main script downloaded and installed"
     elif [[ -f "${SCRIPT_DIR}/main.py" ]]; then
+        # Fallback to local main.py if download fails
         cp "${SCRIPT_DIR}/main.py" "${INSTALL_DIR}/main.py"
         chmod +x "${INSTALL_DIR}/main.py"
-        debug "Main script installed"
+        debug "Local main script installed"
     else
         # Create a basic main.py if none exists
         cat > "${INSTALL_DIR}/main.py" << 'MAIN_EOF'
@@ -1283,7 +1300,7 @@ if __name__ == '__main__':
     sys.exit(main())
 MAIN_EOF
         chmod +x "${INSTALL_DIR}/main.py"
-        debug "Basic main script created"
+        warn "Using basic main script - optimized version could not be downloaded"
     fi
 
     # Create Flatpak-compatible launcher
@@ -1418,8 +1435,17 @@ Name=com.shader_predict.SteamMonitor
 Exec=/home/deck/.local/share/shader-predict-compile/steam_monitor.py
 DBUS_EOF
 
-    # Create Steam monitor script
-    cat > "$INSTALL_DIR/steam_monitor.py" << 'STEAM_MONITOR_EOF'
+    # Download enhanced Steam monitor from GitHub
+    local steam_monitor_url="${GITHUB_RAW}/enhanced_steam_monitor.py"
+    if curl -fsSL "$steam_monitor_url" -o "$INSTALL_DIR/enhanced_steam_monitor.py"; then
+        chmod +x "$INSTALL_DIR/enhanced_steam_monitor.py"
+        success "Enhanced Steam monitor downloaded and installed"
+        
+        # Create symlink for compatibility
+        ln -sf "$INSTALL_DIR/enhanced_steam_monitor.py" "$INSTALL_DIR/steam_monitor.py"
+    else
+        # Fallback to basic Steam monitor script
+        cat > "$INSTALL_DIR/steam_monitor.py" << 'STEAM_MONITOR_EOF'
 #!/usr/bin/env python3
 """Steam integration monitor for shader prediction"""
 import dbus
@@ -1544,12 +1570,12 @@ EOF
     if [[ "$SKIP_STEAM_INTEGRATION" != "true" ]]; then
         cat > "$HOME/.config/systemd/user/steam-monitor.service" << EOF
 [Unit]
-Description=Steam Launch Monitor
+Description=Enhanced Steam Launch Monitor (No D-Bus Compilation)
 After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=${INSTALL_DIR}/steam_monitor.py
+ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/enhanced_steam_monitor.py
 Restart=always
 RestartSec=10
 Environment=DISPLAY=:0
