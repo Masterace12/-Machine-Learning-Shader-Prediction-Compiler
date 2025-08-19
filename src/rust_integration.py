@@ -1,25 +1,57 @@
 #!/usr/bin/env python3
 """
-Python integration layer for the Rust-based shader prediction system.
+Enhanced Python integration layer for shader prediction system.
 
-This module provides a seamless interface between the existing Python codebase
-and the high-performance Rust components.
+This module provides intelligent hybrid execution between Rust acceleration
+and optimized Python implementations with advanced fallback strategies.
 """
 
 import sys
+import time
 import logging
 import importlib.util
-from typing import Optional, Dict, List, Any
-import numpy as np
+import threading
+from typing import Optional, Dict, List, Any, Union
+from pathlib import Path
+from dataclasses import dataclass
+from enum import Enum
 
-# Try to import the Rust module
+# Enhanced imports
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+
+# Performance monitoring
+class PerformanceLevel(Enum):
+    RUST_OPTIMAL = "rust_optimal"           # <0.5ms predictions
+    RUST_GOOD = "rust_good"                 # <1.0ms predictions  
+    PYTHON_ENHANCED = "python_enhanced"     # <2.0ms predictions
+    PYTHON_STANDARD = "python_standard"     # <5.0ms predictions
+    HEURISTIC_FALLBACK = "heuristic"       # Basic fallback
+
+@dataclass
+class PredictionMetrics:
+    """Performance metrics for prediction system"""
+    average_time_ms: float = 0.0
+    success_rate: float = 1.0
+    cache_hit_rate: float = 0.0
+    memory_usage_mb: float = 0.0
+    backend: str = "unknown"
+    prediction_count: int = 0
+
+# Enhanced Rust module detection with performance validation
+RUST_AVAILABLE = False
+RUST_PERFORMANCE_VALIDATED = False
+rust_performance_metrics = None
+
 try:
     import shader_predict_rust
     RUST_AVAILABLE = True
-    logging.info("Rust acceleration available")
+    logging.info("Rust module detected - validating performance...")
 except ImportError:
-    RUST_AVAILABLE = False
-    logging.warning("Rust acceleration not available, falling back to Python implementation")
+    logging.info("Rust module not available - using optimized Python implementation")
 
 class HybridMLPredictor:
     """
