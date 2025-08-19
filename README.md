@@ -57,21 +57,19 @@ When you play games on Steam Deck, you experience:
 
 ## 📦 Installation
 
-### Recommended Installation (Guaranteed Working)
+### One-Command Installation
 
-**Clone repository and run local installer for Steam Deck or any Linux system:**
+**Simple, reliable installation for Steam Deck or any Linux system:**
 
 ```bash
-# Clone the repository to get the latest working version
-git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler.git
-cd ./-Machine-Learning-Shader-Prediction-Compiler
-./install.sh
+# Download and run the latest installer
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
 ```
 
-### Alternative: Direct Download (May have version issues)
+### Alternative: Download First, Then Run
 
 ```bash
-# Download installer directly (not recommended - may be outdated)
+# Download installer 
 wget https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh
 chmod +x install.sh
 ./install.sh
@@ -83,6 +81,7 @@ chmod +x install.sh
 - ✅ **MANDATORY dependency validation** - fails if ML libs missing
 - ✅ **User-space installation** - no root access needed
 - ✅ **Creates ML-powered command-line tools**
+- ✅ **Accurate dependency reporting** - no false fallback warnings
 
 ### Optional: Enable background service
 
@@ -90,16 +89,6 @@ chmod +x install.sh
 # For automatic operation in background
 ./install.sh --enable-service
 ```
-
-### ⚠️ Important: Use Repository Clone (Recommended)
-
-**Why clone instead of wget?**
-- ✅ **Always gets the latest fixes** including threading optimizations
-- ✅ **Includes all required files** like `setup_threading.py`
-- ✅ **Proper dependency reporting** - no false "fallback" warnings
-- ✅ **Complete system** with all components synchronized
-
-**If you see messages like "⚠️ numpy failed - using pure Python fallback"** - you're using an outdated installer. Use the repository clone method instead!
 
 ### Verification
 
@@ -119,22 +108,13 @@ shader-predict-compile --help
 
 ## 🔄 Updating
 
-### Recommended Update (Guaranteed Latest)
+### Simple Update
 
 To update to the latest version:
 
 ```bash
-# Update the repository and re-run installer
-cd ./-Machine-Learning-Shader-Prediction-Compiler
-git pull origin main
-./install.sh
-```
-
-### Alternative Update
-
-```bash
-# Re-run the installer (only if you have the working version)
-./install.sh
+# Re-run the one-command installer
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
 ```
 
 **The installer will:**
@@ -213,11 +193,23 @@ systemctl --user stop shader-predict-compile.service
 
 ### Common Issues
 
+**Permission denied errors:**
+```bash
+# Use the one-command installer instead
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
+
+# Or download to home directory
+cd ~
+wget https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh
+chmod +x install.sh
+./install.sh
+```
+
 **Installation fails:**
 ```bash
 # Try manual installation
 python3 -m pip install --user numpy psutil
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
 ```
 
 **Services won't start:**
@@ -227,10 +219,10 @@ systemctl --user restart shader-predict-compile.service
 systemctl --user status shader-predict-compile.service
 ```
 
-**Not detecting games:**
-```bash  
-# Check Steam integration
-shader-predict-status
+**Still seeing "pure Python fallback" warnings:**
+```bash
+# Use the latest installer - old versions show false warnings
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
 ```
 
 ### Getting Help
