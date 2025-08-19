@@ -16,23 +16,28 @@ from enum import Enum
 
 # Import base classes
 try:
-    from ..ml.unified_ml_predictor import ThermalState, SteamDeckModel
+    # Try relative import first (when used as package)
+    from ..core.unified_ml_predictor import ThermalState, SteamDeckModel
 except ImportError:
-    # Fallback definitions if base module not available
-    class ThermalState(Enum):
-        COOL = "cool"
-        OPTIMAL = "optimal"
-        NORMAL = "normal"
-        WARM = "warm"
-        HOT = "hot"
-        THROTTLING = "throttling"
-        CRITICAL = "critical"
-        PREDICTIVE_WARM = "predictive_warm"
-    
-    class SteamDeckModel(Enum):
-        LCD = "lcd"
-        OLED = "oled"
-        UNKNOWN = "unknown"
+    try:
+        # Try absolute import (when used as script)
+        from src.core.unified_ml_predictor import ThermalState, SteamDeckModel
+    except ImportError:
+        # Fallback definitions if base module not available
+        class ThermalState(Enum):
+            COOL = "cool"
+            OPTIMAL = "optimal"
+            NORMAL = "normal"
+            WARM = "warm"
+            HOT = "hot"
+            THROTTLING = "throttling"
+            CRITICAL = "critical"
+            PREDICTIVE_WARM = "predictive_warm"
+        
+        class SteamDeckModel(Enum):
+            LCD = "lcd"
+            OLED = "oled"
+            UNKNOWN = "unknown"
 
 
 @dataclass

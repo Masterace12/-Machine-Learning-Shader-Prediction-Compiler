@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# ML Shader Prediction Compiler - Simple Uninstaller
-# Removes all traces of the system
+# High-Performance ML Shader Prediction Compiler - Uninstaller
+# Removes all traces of the ML system and dependencies
 
-echo "🗑️  ML Shader Prediction Compiler - Uninstaller"
-echo "=============================================="
+echo "🗑️  High-Performance ML Shader Prediction Compiler - Uninstaller"
+echo "================================================================="
 echo ""
 
 # Colors
@@ -44,13 +44,13 @@ rm -f "$HOME/.local/bin/shader-predict-test" 2>/dev/null || true
 echo "Removing services..."
 rm -f "$HOME/.config/systemd/user/shader-predict-compile.service" 2>/dev/null || true
 
-# Remove system-wide installation (if user has sudo)
-if command -v sudo &> /dev/null; then
-    echo "Removing system-wide files (if any)..."
-    sudo rm -rf "/opt/shader-predict-compile" 2>/dev/null || true
-    sudo rm -f "/usr/local/bin/shader-predict-compile" 2>/dev/null || true
-    sudo rm -f "/usr/local/bin/shader-predict-status" 2>/dev/null || true
-    sudo rm -f "/usr/local/bin/shader-predict-test" 2>/dev/null || true
+# Check for system-wide installation (but don't remove - requires manual cleanup)
+if [ -d "/opt/shader-predict-compile" ] || [ -f "/usr/local/bin/shader-predict-compile" ]; then
+    echo -e "${YELLOW}Note: System-wide installation detected but not removed${NC}"
+    echo "To remove system-wide files (if needed), run manually:"
+    echo "  sudo rm -rf /opt/shader-predict-compile"
+    echo "  sudo rm -f /usr/local/bin/shader-predict-*"
+    echo ""
 fi
 
 # Reload systemd

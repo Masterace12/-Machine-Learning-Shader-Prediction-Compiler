@@ -18,20 +18,18 @@ from dataclasses import dataclass
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-# Optimized component imports with proper fallback handling
+# High-Performance ML-Only Imports
 try:
-    from src.core import (
-        HybridMLPredictor, OptimizedMLPredictor, 
-        get_optimized_predictor_safe, get_optimized_cache_safe,
-        HAS_ML_PREDICTOR as CORE_HAS_ML_PREDICTOR,
-        HAS_SHADER_CACHE as CORE_HAS_CACHE
-    )
+    from src.core.ml_only_predictor import get_ml_predictor, HighPerformanceMLPredictor
+    from src.core import get_optimized_cache_safe, HAS_SHADER_CACHE as CORE_HAS_CACHE
     from src.rust_integration import get_system_info, is_steam_deck
-    HAS_ML_PREDICTOR = CORE_HAS_ML_PREDICTOR
+    HAS_ML_PREDICTOR = True  # ML is now required, not optional
+    print("✅ High-Performance ML predictor loaded")
 except ImportError as e:
-    print(f"⚠️  ML predictor not available: {e}")
-    HAS_ML_PREDICTOR = False
-    get_optimized_predictor_safe = lambda: None
+    print(f"❌ CRITICAL: ML libraries required for operation: {e}")
+    print("   Install with: pip install numpy scikit-learn lightgbm")
+    print("   Or run: ./install.sh")
+    sys.exit(1)  # Fail fast - ML is mandatory
 
 try:
     from src.core import HybridVulkanCache, OptimizedShaderCache
@@ -170,17 +168,21 @@ class OptimizedShaderSystem:
     
     @property
     def ml_predictor(self):
-        """Lazy-loaded ML predictor"""
-        if self._ml_predictor is None and HAS_ML_PREDICTOR:
+        """High-Performance ML-only predictor"""
+        if self._ml_predictor is None:
             if self.config.enable_ml_prediction:
                 try:
-                    self._ml_predictor = get_optimized_predictor_safe()
-                    if self._ml_predictor is not None:
-                        self.logger.info("ML predictor initialized")
-                    else:
-                        self.logger.warning("ML predictor could not be initialized")
+                    # Initialize high-performance ML predictor with maximum optimization
+                    self._ml_predictor = get_ml_predictor(force_reload=False)
+                    self.logger.info("High-Performance ML predictor initialized")
+                    
+                    # Log performance capabilities
+                    metrics = self._ml_predictor.get_performance_metrics()
+                    self.logger.info(f"ML Model: {metrics['primary_model']}, Throughput: {metrics['predictions_per_second']:.0f} pred/sec")
+                    
                 except Exception as e:
-                    self.logger.error(f"Failed to initialize ML predictor: {e}")
+                    self.logger.error(f"CRITICAL: Failed to initialize ML predictor: {e}")
+                    raise RuntimeError("ML predictor is required for operation")
         return self._ml_predictor
     
     @property
@@ -389,9 +391,19 @@ class OptimizedShaderSystem:
             except Exception as e:
                 status["cache"] = {"error": str(e)}
         
-        if self.ml_predictor and hasattr(self.ml_predictor, 'get_performance_stats'):
+        if self.ml_predictor and hasattr(self.ml_predictor, 'get_performance_metrics'):
             try:
-                status["ml"] = self.ml_predictor.get_performance_stats()
+                ml_metrics = self.ml_predictor.get_performance_metrics()
+                status["ml"] = {
+                    "model_type": "High-Performance ML",
+                    "primary_model": ml_metrics.get("primary_model", "Unknown"),
+                    "predictions_per_second": ml_metrics.get("predictions_per_second", 0),
+                    "average_prediction_time_ms": ml_metrics.get("average_prediction_time_ms", 0),
+                    "prediction_count": ml_metrics.get("prediction_count", 0),
+                    "optimization_level": ml_metrics.get("optimization_level", 0),
+                    "performance_features_active": sum(ml_metrics.get("performance_features", {}).values()),
+                    "backend": "ML-Only (No Fallbacks)"
+                }
             except Exception as e:
                 status["ml"] = {"error": str(e)}
         

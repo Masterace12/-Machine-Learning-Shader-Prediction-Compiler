@@ -139,17 +139,27 @@ except ImportError:
 
 # Import base classes
 try:
+    # Try relative import first (when used as package)
     from .unified_ml_predictor import (
         ShaderType, ThermalState, SteamDeckModel,
         UnifiedShaderFeatures, HeuristicPredictor,
         ThermalAwareScheduler
     )
 except ImportError:
-    from unified_ml_predictor import (
-        ShaderType, ThermalState, SteamDeckModel,
-        UnifiedShaderFeatures, HeuristicPredictor,
-        ThermalAwareScheduler
-    )
+    try:
+        # Try absolute import (when used as script)
+        from src.core.unified_ml_predictor import (
+            ShaderType, ThermalState, SteamDeckModel,
+            UnifiedShaderFeatures, HeuristicPredictor,
+            ThermalAwareScheduler
+        )
+    except ImportError:
+        # Fallback for direct execution
+        from unified_ml_predictor import (
+            ShaderType, ThermalState, SteamDeckModel,
+            UnifiedShaderFeatures, HeuristicPredictor,
+            ThermalAwareScheduler
+        )
 
 
 def fast_feature_normalization_impl(features, means, stds):

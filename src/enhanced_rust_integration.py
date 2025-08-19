@@ -35,9 +35,9 @@ class PerformanceLevel(Enum):
 
 class BackendType(Enum):
     RUST_PRIMARY = "rust_primary"
-    PYTHON_ENHANCED = "python_enhanced"
-    PYTHON_OPTIMIZED = "python_optimized"
-    HEURISTIC = "heuristic"
+    ML_LIGHTGBM = "ml_lightgbm"
+    ML_SKLEARN = "ml_sklearn"
+    # REMOVED: HEURISTIC - No longer supported (ML-only system)
 
 @dataclass
 class PredictionMetrics:
@@ -131,18 +131,15 @@ class EnhancedHybridPredictor:
         self.performance_threshold_ms = performance_threshold_ms
         
         # Backend management
-        self.current_backend = BackendType.HEURISTIC
+        self.current_backend = BackendType.ML_LIGHTGBM  # Default to high-performance ML
         self.rust_predictor = None
-        self.python_enhanced_predictor = None
-        self.python_optimized_predictor = None
-        self.heuristic_predictor = None
+        self.ml_predictor = None  # Single high-performance ML predictor
         
         # Performance monitoring
         self.performance_monitors = {
             BackendType.RUST_PRIMARY: PerformanceMonitor(),
-            BackendType.PYTHON_ENHANCED: PerformanceMonitor(),
-            BackendType.PYTHON_OPTIMIZED: PerformanceMonitor(),
-            BackendType.HEURISTIC: PerformanceMonitor()
+            BackendType.ML_LIGHTGBM: PerformanceMonitor(),
+            BackendType.ML_SKLEARN: PerformanceMonitor()
         }
         
         # Auto-switching configuration
@@ -168,10 +165,8 @@ class EnhancedHybridPredictor:
             if RUST_AVAILABLE and not self.force_python:
                 self._try_initialize_rust()
             
-            # Always initialize Python backends as fallbacks
-            self._initialize_python_enhanced()
-            self._initialize_python_optimized()
-            self._initialize_heuristic()
+            # Always initialize ML predictor (required for operation)
+            self._initialize_ml_predictor()
             
             # Set initial backend
             self._select_optimal_backend()
@@ -214,47 +209,90 @@ class EnhancedHybridPredictor:
         self.rust_predictor = None
         return False
     
+    def _initialize_ml_predictor(self):
+        """Initialize high-performance ML-only predictor"""
+        try:
+            # Try relative import first (when used as package)
+            from .core.ml_only_predictor import get_ml_predictor
+            self.ml_predictor = get_ml_predictor()
+            self.logger.info("High-Performance ML predictor initialized (relative import)")
+        except ImportError:
+            try:
+                # Try absolute import (when used as script)
+                from src.core.ml_only_predictor import get_ml_predictor
+                self.ml_predictor = get_ml_predictor()
+                self.logger.info("High-Performance ML predictor initialized (absolute import)")
+            except ImportError as e:
+                self.logger.error(f"CRITICAL: Cannot initialize ML predictor: {e}")
+                self.logger.error("ML predictor is required for operation. Install with: pip install numpy scikit-learn lightgbm")
+                raise RuntimeError("ML predictor is mandatory - no fallbacks available")
+    
     def _initialize_python_enhanced(self):
         """Initialize enhanced Python predictor"""
         try:
+            # Try relative import first (when used as package)
             from .core.enhanced_ml_predictor import get_enhanced_predictor
             self.python_enhanced_predictor = get_enhanced_predictor()
-            self.logger.info("Enhanced Python predictor initialized")
-        except ImportError as e:
-            self.logger.warning(f"Enhanced Python predictor not available: {e}")
-            self.python_enhanced_predictor = None
+            self.logger.info("Enhanced Python predictor initialized (relative import)")
+        except ImportError:
+            try:
+                # Try absolute import (when used as script)
+                from src.core.enhanced_ml_predictor import get_enhanced_predictor
+                self.python_enhanced_predictor = get_enhanced_predictor()
+                self.logger.info("Enhanced Python predictor initialized (absolute import)")
+            except ImportError as e:
+                self.logger.warning(f"Enhanced Python predictor not available: {e}")
+                self.python_enhanced_predictor = None
     
     def _initialize_python_optimized(self):
         """Initialize optimized Python predictor"""
         try:
+            # Try relative import first (when used as package)
             from .core.optimized_ml_predictor import get_optimized_predictor
             self.python_optimized_predictor = get_optimized_predictor()
-            self.logger.info("Optimized Python predictor initialized")
-        except ImportError as e:
-            self.logger.warning(f"Optimized Python predictor not available: {e}")
-            self.python_optimized_predictor = None
+            self.logger.info("Optimized Python predictor initialized (relative import)")
+        except ImportError:
+            try:
+                # Try absolute import (when used as script)
+                from src.core.optimized_ml_predictor import get_optimized_predictor
+                self.python_optimized_predictor = get_optimized_predictor()
+                self.logger.info("Optimized Python predictor initialized (absolute import)")
+            except ImportError as e:
+                self.logger.warning(f"Optimized Python predictor not available: {e}")
+                self.python_optimized_predictor = None
     
     def _initialize_heuristic(self):
         """Initialize heuristic fallback predictor"""
         try:
+            # Try relative import first (when used as package)
             from .core.unified_ml_predictor import HeuristicPredictor
             self.heuristic_predictor = HeuristicPredictor()
-            self.logger.info("Heuristic predictor initialized")
-        except ImportError as e:
-            self.logger.error(f"Cannot initialize heuristic predictor: {e}")
-            raise RuntimeError("No prediction backend available")
+            self.logger.info("Heuristic predictor initialized (relative import)")
+        except ImportError:
+            try:
+                # Try absolute import (when used as script)
+                from src.core.unified_ml_predictor import HeuristicPredictor
+                self.heuristic_predictor = HeuristicPredictor()
+                self.logger.info("Heuristic predictor initialized (absolute import)")
+            except ImportError as e:
+                self.logger.error(f"Cannot initialize heuristic predictor: {e}")
+                raise RuntimeError("No prediction backend available")
     
     def _select_optimal_backend(self):
         """Select the optimal backend based on availability and performance"""
-        # Priority order: Rust -> Enhanced Python -> Optimized Python -> Heuristic
+        # Priority order: Rust -> ML LightGBM -> ML sklearn
         if self.rust_predictor and not self.force_python:
             self.current_backend = BackendType.RUST_PRIMARY
-        elif self.python_enhanced_predictor:
-            self.current_backend = BackendType.PYTHON_ENHANCED
-        elif self.python_optimized_predictor:
-            self.current_backend = BackendType.PYTHON_OPTIMIZED
+        elif self.ml_predictor:
+            # Check which ML model is primary
+            metrics = self.ml_predictor.get_performance_metrics()
+            if metrics.get("primary_model") == "LightGBM":
+                self.current_backend = BackendType.ML_LIGHTGBM
+            else:
+                self.current_backend = BackendType.ML_SKLEARN
         else:
-            self.current_backend = BackendType.HEURISTIC
+            self.logger.error("CRITICAL: No prediction backend available")
+            raise RuntimeError("ML predictor initialization failed - system cannot operate")
         
         self.logger.info(f"Selected backend: {self.current_backend.value}")
     
@@ -290,12 +328,8 @@ class EnhancedHybridPredictor:
         """Check if a backend is available"""
         if backend == BackendType.RUST_PRIMARY:
             return self.rust_predictor is not None
-        elif backend == BackendType.PYTHON_ENHANCED:
-            return self.python_enhanced_predictor is not None
-        elif backend == BackendType.PYTHON_OPTIMIZED:
-            return self.python_optimized_predictor is not None
-        elif backend == BackendType.HEURISTIC:
-            return self.heuristic_predictor is not None
+        elif backend in [BackendType.ML_LIGHTGBM, BackendType.ML_SKLEARN]:
+            return self.ml_predictor is not None
         return False
     
     def _switch_backend(self, new_backend: BackendType):
@@ -492,8 +526,16 @@ class EnhancedHybridPredictor:
         
         # Add system information
         try:
-            process = psutil.Process()
-            memory_mb = process.memory_info().rss / (1024 * 1024)
+            # Use our proper SystemMonitor wrapper
+            try:
+                from .core.system_monitor import get_system_monitor
+                monitor = get_system_monitor()
+                memory_info = monitor.get_memory_info()
+                memory_mb = memory_info.rss / (1024 * 1024) if memory_info.rss > 0 else 0.0
+            except ImportError:
+                # Fallback to direct psutil usage (with correct API)
+                process = psutil.Process()
+                memory_mb = process.memory_info().rss / (1024 * 1024)
         except Exception:
             memory_mb = 0.0
         
@@ -618,7 +660,12 @@ if __name__ == "__main__":
         print(f"\n✓ Initialized with backend: {predictor.current_backend.value}")
         
         # Test feature extraction and prediction
-        from .core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
+        try:
+            # Try relative import first (when used as package)
+            from .core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
+        except ImportError:
+            # Try absolute import (when used as script)
+            from src.core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
         
         test_features = UnifiedShaderFeatures(
             shader_hash="hybrid_test_123",

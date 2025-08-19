@@ -98,7 +98,7 @@ class SteamDeckTestSuite:
     def test_steam_deck_detection(self) -> Dict[str, Any]:
         """Test Steam Deck hardware detection"""
         try:
-            from core.pure_python_fallbacks import PureSteamDeckDetector
+            from src.core.pure_python_fallbacks import PureSteamDeckDetector
             
             detector = PureSteamDeckDetector()
             is_steam_deck = detector.is_steam_deck()
@@ -124,7 +124,7 @@ class SteamDeckTestSuite:
     def test_dependency_fallbacks(self) -> Dict[str, Any]:
         """Test pure Python dependency fallbacks"""
         try:
-            from core.pure_python_fallbacks import get_fallback_status, AVAILABLE_DEPS
+            from src.core.pure_python_fallbacks import get_fallback_status, AVAILABLE_DEPS
             
             status = get_fallback_status()
             
@@ -133,7 +133,7 @@ class SteamDeckTestSuite:
             
             # Test array math
             try:
-                from core.pure_python_fallbacks import ArrayMath
+                from src.core.pure_python_fallbacks import ArrayMath
                 test_data = [1.0, 2.0, 3.0, 4.0, 5.0]
                 mean_result = ArrayMath.mean(test_data)
                 fallback_tests['array_math'] = abs(mean_result - 3.0) < 0.001
@@ -142,7 +142,7 @@ class SteamDeckTestSuite:
             
             # Test serialization
             try:
-                from core.pure_python_fallbacks import Serializer
+                from src.core.pure_python_fallbacks import Serializer
                 test_obj = {'test': 'data', 'numbers': [1, 2, 3]}
                 serialized = Serializer.packb(test_obj)
                 deserialized = Serializer.unpackb(serialized)
@@ -152,7 +152,7 @@ class SteamDeckTestSuite:
             
             # Test compression
             try:
-                from core.pure_python_fallbacks import Compressor, Decompressor
+                from src.core.pure_python_fallbacks import Compressor, Decompressor
                 test_string = "Test compression data" * 10
                 compressed = Compressor.compress(test_string.encode())
                 decompressed = Decompressor.decompress(compressed).decode()
@@ -162,8 +162,9 @@ class SteamDeckTestSuite:
             
             # Test system monitoring
             try:
-                from core.pure_python_fallbacks import SystemMonitor
-                memory_info = SystemMonitor.memory_info()
+                from src.core.system_monitor import get_system_monitor
+                monitor = get_system_monitor()
+                memory_info = monitor.get_memory_info()
                 fallback_tests['system_monitoring'] = hasattr(memory_info, 'rss')
             except Exception as e:
                 fallback_tests['system_monitoring'] = f"Error: {e}"
@@ -187,8 +188,8 @@ class SteamDeckTestSuite:
     def test_enhanced_ml_predictor(self) -> Dict[str, Any]:
         """Test Enhanced ML Predictor performance"""
         try:
-            from core.enhanced_ml_predictor import get_enhanced_predictor
-            from core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
+            from src.core.enhanced_ml_predictor import get_enhanced_predictor
+            from src.core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
             
             predictor = get_enhanced_predictor()
             
@@ -251,7 +252,7 @@ class SteamDeckTestSuite:
     def test_thermal_management(self) -> Dict[str, Any]:
         """Test thermal monitoring and management"""
         try:
-            from core.pure_python_fallbacks import PureThermalMonitor
+            from src.core.pure_python_fallbacks import PureThermalMonitor
             
             thermal = PureThermalMonitor()
             
@@ -283,8 +284,8 @@ class SteamDeckTestSuite:
     def test_hybrid_integration(self) -> Dict[str, Any]:
         """Test enhanced hybrid integration system"""
         try:
-            from enhanced_rust_integration import get_hybrid_predictor
-            from core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
+            from src.enhanced_rust_integration import get_hybrid_predictor
+            from src.core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
             
             predictor = get_hybrid_predictor()
             
@@ -350,7 +351,7 @@ class SteamDeckTestSuite:
             
             # Test Steam detection
             try:
-                from core.pure_python_fallbacks import PureDBusInterface
+                from src.core.pure_python_fallbacks import PureDBusInterface
                 
                 dbus_interface = PureDBusInterface()
                 steam_detected = dbus_interface.steam_detected
@@ -412,16 +413,16 @@ class SteamDeckTestSuite:
             initial_memory = process.memory_info().rss / (1024 * 1024)
             
             # Load and test multiple components
-            from core.enhanced_ml_predictor import get_enhanced_predictor
-            from enhanced_rust_integration import get_hybrid_predictor
-            from core.pure_python_fallbacks import get_fallback_status
+            from src.core.enhanced_ml_predictor import get_enhanced_predictor
+            from src.enhanced_rust_integration import get_hybrid_predictor
+            from src.core.pure_python_fallbacks import get_fallback_status
             
             predictor = get_enhanced_predictor()
             hybrid = get_hybrid_predictor()
             fallback_status = get_fallback_status()
             
             # Stress test memory usage
-            from core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
+            from src.core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
             
             test_features = UnifiedShaderFeatures(
                 shader_hash="memory_test_789",
@@ -464,12 +465,13 @@ class SteamDeckTestSuite:
         except Exception as e:
             # If psutil not available, test with fallback
             try:
-                from core.pure_python_fallbacks import SystemMonitor
-                memory_info = SystemMonitor.memory_info()
+                from src.core.system_monitor import get_system_monitor
+                monitor = get_system_monitor()
+                memory_info = monitor.get_memory_info()
                 
                 details = {
                     'memory_monitoring': 'fallback',
-                    'estimated_memory_mb': memory_info.rss / (1024 * 1024),
+                    'estimated_memory_mb': memory_info.rss / (1024 * 1024) if memory_info.rss > 0 else 0.0,
                     'memory_fallback_working': True
                 }
                 
@@ -483,8 +485,8 @@ class SteamDeckTestSuite:
     def test_performance_benchmarks(self) -> Dict[str, Any]:
         """Test comprehensive performance benchmarks"""
         try:
-            from core.enhanced_ml_predictor import get_enhanced_predictor
-            from core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
+            from src.core.enhanced_ml_predictor import get_enhanced_predictor
+            from src.core.unified_ml_predictor import UnifiedShaderFeatures, ShaderType
             
             predictor = get_enhanced_predictor()
             

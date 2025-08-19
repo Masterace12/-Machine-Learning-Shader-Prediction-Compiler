@@ -3,31 +3,31 @@
     "total_tests": 9,
     "successful_tests": 7,
     "success_rate": 77.77777777777779,
-    "total_duration_seconds": 7.546470642089844,
+    "total_duration_seconds": 7.775420665740967,
     "platform": "Linux",
     "machine": "x86_64",
     "python_version": "3.13.1",
-    "timestamp": "2025-08-18 22:27:04"
+    "timestamp": "2025-08-18 23:16:47"
   },
   "test_results": [
     {
       "name": "Steam Deck Hardware Detection",
       "success": true,
-      "duration_ms": 123.9428789995145,
+      "duration_ms": 108.77633700147271,
       "details": {
         "is_steam_deck": true,
         "model": "steam_deck_oled",
         "dmi_product": "Galileo",
         "dmi_board": "Galileo",
         "home_deck_exists": true,
-        "cpu_info_snippet": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 23\nmodel\t\t: 145\nmodel name\t: AMD Custom APU 0932\nstepping\t: 0\nmicrocode\t: 0x8901003\ncpu MHz\t\t: 1270.984\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings..."
+        "cpu_info_snippet": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 23\nmodel\t\t: 145\nmodel name\t: AMD Custom APU 0932\nstepping\t: 0\nmicrocode\t: 0x8901003\ncpu MHz\t\t: 1327.968\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings..."
       },
       "error": null
     },
     {
       "name": "Dependency Fallback System",
       "success": true,
-      "duration_ms": 0.6176870010676794,
+      "duration_ms": 0.5027750012231991,
       "details": {
         "available_dependencies": {
           "numpy": false,
@@ -71,11 +71,11 @@
     {
       "name": "Enhanced ML Predictor",
       "success": true,
-      "duration_ms": 1388.6822929998743,
+      "duration_ms": 1394.7170409956016,
       "details": {
-        "average_prediction_time_ms": 54.78649535034492,
-        "min_prediction_time_ms": 44.82005099998787,
-        "max_prediction_time_ms": 65.94572000176413,
+        "average_prediction_time_ms": 54.695420350981294,
+        "min_prediction_time_ms": 45.56712399789831,
+        "max_prediction_time_ms": 71.7568330001086,
         "sample_predictions": [
           67.70400000000001,
           67.70400000000001,
@@ -90,7 +90,7 @@
           "has_numpy": false,
           "has_msgpack": false,
           "has_zstd": false,
-          "avg_prediction_time_ms": 55.070449839986395,
+          "avg_prediction_time_ms": 55.32184000039706,
           "fast_prediction_rate": 0.0,
           "ultra_fast_prediction_rate": 0.0,
           "feature_cache_stats": {
@@ -186,7 +186,7 @@
     {
       "name": "Thermal Management",
       "success": true,
-      "duration_ms": 0.6464990001404658,
+      "duration_ms": 0.7077560003381222,
       "details": {
         "cpu_temperature": 46.0,
         "thermal_state": "cool",
@@ -207,14 +207,14 @@
     {
       "name": "Hybrid Integration System",
       "success": false,
-      "duration_ms": 2.5922960048774257,
+      "duration_ms": 2.8561770013766363,
       "details": {},
       "error": "No prediction backend available"
     },
     {
       "name": "Steam Platform Integration",
       "success": true,
-      "duration_ms": 91.95653600181686,
+      "duration_ms": 84.76182699814672,
       "details": {
         "steam_components": {
           "dbus_interface": {
@@ -235,60 +235,60 @@
     {
       "name": "Memory Management",
       "success": false,
-      "duration_ms": 0.4539599976851605,
+      "duration_ms": 0.4572449979605153,
       "details": {},
       "error": "module 'psutil' has no attribute 'memory_info'"
     },
     {
       "name": "Performance Benchmarks",
       "success": true,
-      "duration_ms": 5935.509275004733,
+      "duration_ms": 6180.9030870063,
       "details": {
         "scenario_results": {
           "Simple Vertex": {
-            "avg_time_ms": 49.70504815064487,
-            "min_time_ms": 36.28034400026081,
-            "max_time_ms": 61.78005599940661,
+            "avg_time_ms": 55.19261305089458,
+            "min_time_ms": 36.84297099971445,
+            "max_time_ms": 69.08941700385185,
             "avg_prediction_ms": 12.459999999999999,
             "times_under_2ms": 0,
             "total_tests": 20
           },
           "Complex Fragment": {
-            "avg_time_ms": 52.75598645021091,
-            "min_time_ms": 35.82159899815451,
-            "max_time_ms": 69.21528199745808,
+            "avg_time_ms": 55.90387779993762,
+            "min_time_ms": 37.537327996687964,
+            "max_time_ms": 69.97411700285738,
             "avg_prediction_ms": 85.26,
             "times_under_2ms": 0,
             "total_tests": 20
           },
           "Heavy Compute": {
-            "avg_time_ms": 50.60481590007839,
-            "min_time_ms": 35.190572001738474,
-            "max_time_ms": 64.21588900411734,
+            "avg_time_ms": 51.296852399536874,
+            "min_time_ms": 38.13509400060866,
+            "max_time_ms": 70.11670700012473,
             "avg_prediction_ms": 127.53999999999999,
             "times_under_2ms": 0,
             "total_tests": 20
           },
           "Geometry Shader": {
-            "avg_time_ms": 53.13078359977226,
-            "min_time_ms": 34.987619997991715,
-            "max_time_ms": 70.4979110014392,
+            "avg_time_ms": 53.45529635051207,
+            "min_time_ms": 38.58134699839866,
+            "max_time_ms": 65.30008200206794,
             "avg_prediction_ms": 66.08,
             "times_under_2ms": 0,
             "total_tests": 20
           },
           "Tessellation": {
-            "avg_time_ms": 52.14212625105574,
-            "min_time_ms": 36.57226500217803,
-            "max_time_ms": 72.62717700359644,
+            "avg_time_ms": 55.91739084957226,
+            "min_time_ms": 36.715099995490164,
+            "max_time_ms": 82.55728599760914,
             "avg_prediction_ms": 76.58,
             "times_under_2ms": 0,
             "total_tests": 20
           }
         },
-        "overall_avg_time_ms": 51.667752070352435,
-        "fastest_scenario_ms": 49.70504815064487,
-        "slowest_scenario_ms": 53.13078359977226,
+        "overall_avg_time_ms": 54.35320609009068,
+        "fastest_scenario_ms": 51.296852399536874,
+        "slowest_scenario_ms": 55.91739084957226,
         "performance_target_met": false,
         "fast_predictions_percentage": 0.0
       },
@@ -297,7 +297,7 @@
     {
       "name": "Installation Validation",
       "success": true,
-      "duration_ms": 0.6420779973268509,
+      "duration_ms": 0.4042729997308925,
       "details": {
         "file_status": {
           "src/core/enhanced_ml_predictor.py": {
@@ -316,14 +316,14 @@
             "readable": true
           },
           "requirements-pure-python.txt": {
-            "exists": true,
-            "size_bytes": 7964,
-            "readable": true
+            "exists": false,
+            "size_bytes": 0,
+            "readable": false
           },
           "requirements-optimized.txt": {
-            "exists": true,
-            "size_bytes": 4889,
-            "readable": true
+            "exists": false,
+            "size_bytes": 0,
+            "readable": false
           }
         },
         "import_status": {
@@ -346,17 +346,13 @@
         },
         "requirements_files": {
           "requirements-pure-python.txt": {
-            "exists": true,
-            "line_count": 164,
-            "dependency_count": 55
+            "exists": false
           },
           "requirements-optimized.txt": {
-            "exists": true,
-            "line_count": 112,
-            "dependency_count": 37
+            "exists": false
           }
         },
-        "all_files_present": true,
+        "all_files_present": false,
         "all_modules_importable": true
       },
       "error": null
