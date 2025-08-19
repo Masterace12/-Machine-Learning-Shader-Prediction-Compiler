@@ -57,41 +57,11 @@ When you play games on Steam Deck, you experience:
 
 ## 📦 Installation
 
-### Recommended: Simple Installation Script
-
-**For Steam Deck users experiencing permission issues:**
-
-```bash
-# Clone or download the repository
-git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler.git
-cd -Machine-Learning-Shader-Prediction-Compiler
-
-# Run the simple installer (uses virtual environment - no permission issues)
-./scripts/install_simple.sh
-```
-
-### Alternative: Advanced Installation
-
-```bash
-# For advanced users who want more control
-./scripts/install_fixed.sh --venv    # Use virtual environment (recommended)
-./scripts/install_fixed.sh --system  # System-wide installation (requires sudo)
-```
-
 ### One-Command Installation (Recommended)
 
 ```bash
 # Download and install with one command
 bash <(curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/scripts/web_install.sh)
-```
-
-### Manual Installation (Alternative)
-
-```bash
-# Clone repository and run installer
-git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler.git
-cd -Machine-Learning-Shader-Prediction-Compiler
-./scripts/install_simple.sh
 ```
 
 **What it does:**
