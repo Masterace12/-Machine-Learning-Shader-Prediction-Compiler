@@ -57,12 +57,21 @@ When you play games on Steam Deck, you experience:
 
 ## 📦 Installation
 
-### One-Command Installation
+### Recommended Installation (Guaranteed Working)
 
-**Simple installation for Steam Deck or any Linux system:**
+**Clone repository and run local installer for Steam Deck or any Linux system:**
 
 ```bash
-# Download and run installer
+# Clone the repository to get the latest working version
+git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler.git
+cd -Machine-Learning-Shader-Prediction-Compiler
+./install.sh
+```
+
+### Alternative: Direct Download (May have version issues)
+
+```bash
+# Download installer directly (not recommended - may be outdated)
 wget https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh
 chmod +x install.sh
 ./install.sh
@@ -82,6 +91,16 @@ chmod +x install.sh
 ./install.sh --enable-service
 ```
 
+### ⚠️ Important: Use Repository Clone (Recommended)
+
+**Why clone instead of wget?**
+- ✅ **Always gets the latest fixes** including threading optimizations
+- ✅ **Includes all required files** like `setup_threading.py`
+- ✅ **Proper dependency reporting** - no false "fallback" warnings
+- ✅ **Complete system** with all components synchronized
+
+**If you see messages like "⚠️ numpy failed - using pure Python fallback"** - you're using an outdated installer. Use the repository clone method instead!
+
 ### Verification
 
 After installation, verify it's working:
@@ -100,12 +119,21 @@ shader-predict-compile --help
 
 ## 🔄 Updating
 
-### Simple Update
+### Recommended Update (Guaranteed Latest)
 
 To update to the latest version:
 
 ```bash
-# Re-run the installer
+# Update the repository and re-run installer
+cd -Machine-Learning-Shader-Prediction-Compiler
+git pull origin main
+./install.sh
+```
+
+### Alternative Update
+
+```bash
+# Re-run the installer (only if you have the working version)
 ./install.sh
 ```
 
