@@ -14,6 +14,18 @@ from dataclasses import dataclass
 from collections import deque
 from enum import Enum
 
+# Import thread management
+try:
+    from ..core.thread_pool_manager import get_thread_manager, ThreadPriority
+    from ..core.threading_config import get_threading_configurator
+    HAS_THREAD_MANAGEMENT = True
+except ImportError:
+    HAS_THREAD_MANAGEMENT = False
+    def get_thread_manager():
+        return None
+    def get_threading_configurator():
+        return None
+
 # Import base classes
 try:
     # Try relative import first (when used as package)
@@ -69,6 +81,17 @@ class OptimizedThermalManager:
         
         # Logger (initialize first)
         self.logger = logging.getLogger(__name__ if __name__ != '__main__' else 'optimized_thermal_manager')
+        
+        # Thread management integration
+        self.thread_manager = None
+        self.threading_configurator = None
+        if HAS_THREAD_MANAGEMENT:
+            try:
+                self.thread_manager = get_thread_manager()
+                self.threading_configurator = get_threading_configurator()
+                self.logger.info("Integrated with thread management system")
+            except Exception as e:
+                self.logger.warning(f"Thread management integration failed: {e}")
         
         # Hardware detection
         self.steam_deck_model = self._detect_steam_deck_model()
@@ -248,7 +271,7 @@ class OptimizedThermalManager:
         self.compilation_callbacks.append(callback)
     
     def start_monitoring(self):
-        """Start thermal monitoring"""
+        """Start thermal monitoring using thread pool if available"""
         if self.monitoring_active:
             return
         
@@ -267,6 +290,13 @@ class OptimizedThermalManager:
                             self.logger.info(f"Thermal state: {self.current_state.value} → {new_state.value}")
                             self.current_state = new_state
                             self._update_compilation_threads()
+                            
+                            # Update threading configurator if available
+                            if self.threading_configurator:
+                                try:
+                                    self.threading_configurator.update_thermal_state(new_state.value)
+                                except Exception as e:
+                                    self.logger.warning(f"Failed to update threading configurator: {e}")
                     
                     time.sleep(self.monitoring_interval)
                     
@@ -274,6 +304,16 @@ class OptimizedThermalManager:
                     self.logger.error(f"Monitoring error: {e}")
                     time.sleep(self.monitoring_interval * 2)
         
+        # Use thread manager if available for better resource management
+        if self.thread_manager:
+            try:
+                self.thread_manager.submit_monitoring_task(monitoring_loop)
+                self.logger.info("Thermal monitoring started via thread manager")
+                return
+            except Exception as e:
+                self.logger.warning(f"Thread manager monitoring failed: {e}, falling back to direct threading")
+        
+        # Fallback to direct threading
         self._monitoring_thread = threading.Thread(target=monitoring_loop, daemon=True)
         self._monitoring_thread.start()
         

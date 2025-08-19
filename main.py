@@ -18,6 +18,18 @@ from dataclasses import dataclass
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
+# Initialize threading optimizations FIRST (before any ML imports)
+try:
+    from src.core.startup_threading import initialize_steam_deck_threading, get_threading_status
+    THREADING_INIT_SUCCESS = initialize_steam_deck_threading()
+    if THREADING_INIT_SUCCESS:
+        print("🧵 Threading optimizations initialized")
+    else:
+        print("⚠️  Threading optimization initialization failed")
+except ImportError as e:
+    print(f"⚠️  Threading optimizations not available: {e}")
+    THREADING_INIT_SUCCESS = False
+
 # High-Performance ML-Only Imports
 try:
     from src.core.ml_only_predictor import get_ml_predictor, HighPerformanceMLPredictor
@@ -407,6 +419,24 @@ class OptimizedShaderSystem:
             except Exception as e:
                 status["ml"] = {"error": str(e)}
         
+        # Add threading status
+        if THREADING_INIT_SUCCESS:
+            try:
+                threading_status = get_threading_status()
+                status["threading"] = {
+                    "optimizations_active": threading_status.get("initialized", False),
+                    "thread_metrics": threading_status.get("thread_metrics", {}),
+                    "configured_libraries": threading_status.get("threading_config", {}).get("configured_libraries", []),
+                    "diagnostic_summary": {
+                        "total_threads": threading_status.get("diagnostic_report", {}).get("system_info", {}).get("total_threads", 0),
+                        "critical_issues": threading_status.get("diagnostic_report", {}).get("issues", {}).get("by_severity", {}).get("critical", 0)
+                    }
+                }
+            except Exception as e:
+                status["threading"] = {"error": str(e)}
+        else:
+            status["threading"] = {"optimizations_active": False, "reason": "Threading init failed"}
+        
         return status
     
     async def start_async(self):
@@ -548,6 +578,15 @@ class OptimizedShaderSystem:
                 self.ml_predictor.cleanup()
             except Exception as e:
                 self.logger.warning(f"Failed to cleanup ML predictor: {e}")
+        
+        # Cleanup threading optimizations
+        if THREADING_INIT_SUCCESS:
+            try:
+                from src.core.startup_threading import cleanup_threading
+                cleanup_threading()
+                self.logger.info("✓ Threading optimizations cleaned up")
+            except Exception as e:
+                self.logger.warning(f"Threading cleanup warning: {e}")
         
         # Log final statistics
         final_stats = self.get_system_status()

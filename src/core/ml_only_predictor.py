@@ -12,6 +12,22 @@ from typing import Dict, List, Optional, Union, Any
 from dataclasses import dataclass
 from pathlib import Path
 
+# Import threading optimizations
+try:
+    from .threading_config import configure_threading_for_steam_deck, get_lightgbm_params, get_sklearn_params
+    from .thread_pool_manager import get_thread_manager, ThreadPriority
+    HAS_THREADING_OPTIMIZATIONS = True
+except ImportError:
+    HAS_THREADING_OPTIMIZATIONS = False
+    def configure_threading_for_steam_deck():
+        pass
+    def get_lightgbm_params():
+        return {}
+    def get_sklearn_params():
+        return {}
+    def get_thread_manager():
+        return None
+
 # Essential ML imports - REQUIRED for operation
 try:
     import lightgbm as lgb
@@ -96,6 +112,20 @@ class HighPerformanceMLPredictor:
         self.optimization_level = optimization_level
         self.logger = logging.getLogger(__name__)
         
+        # Configure threading FIRST (before any ML operations)
+        if HAS_THREADING_OPTIMIZATIONS:
+            try:
+                self.threading_configurator = configure_threading_for_steam_deck()
+                self.thread_manager = get_thread_manager()
+                self.logger.info("Threading optimizations configured")
+            except Exception as e:
+                self.logger.warning(f"Threading optimization failed: {e}")
+                self.threading_configurator = None
+                self.thread_manager = None
+        else:
+            self.threading_configurator = None
+            self.thread_manager = None
+        
         # Model storage
         self.lgb_model = None
         self.sklearn_model = None
@@ -115,7 +145,7 @@ class HighPerformanceMLPredictor:
         self._initialize_models()
         
         self.logger.info(f"ML-only predictor initialized with optimization level {optimization_level}")
-        self.logger.info(f"Performance features: Numba={HAS_NUMBA}, Bottleneck={HAS_BOTTLENECK}, NumExpr={HAS_NUMEXPR}")
+        self.logger.info(f"Performance features: Numba={HAS_NUMBA}, Bottleneck={HAS_BOTTLENECK}, NumExpr={HAS_NUMEXPR}, Threading={HAS_THREADING_OPTIMIZATIONS}")
     
     def _initialize_models(self):
         """Initialize ML models for shader prediction"""
@@ -216,7 +246,7 @@ class HighPerformanceMLPredictor:
         valid_data = lgb.Dataset(X_val, label=y_val, reference=train_data)
         
         # LightGBM parameters optimized for Steam Deck
-        params = {
+        base_params = {
             'objective': 'regression',
             'metric': 'rmse',
             'boosting_type': 'gbdt',
@@ -229,6 +259,17 @@ class HighPerformanceMLPredictor:
             'num_threads': min(self.cpu_cores, 6),  # Leave cores for game
             'force_row_wise': True,  # Better for small datasets
         }
+        
+        # Apply threading optimizations if available
+        if HAS_THREADING_OPTIMIZATIONS:
+            try:
+                optimized_params = get_lightgbm_params()
+                base_params.update(optimized_params)
+                self.logger.debug(f"Applied threading-optimized LightGBM params: {optimized_params}")
+            except Exception as e:
+                self.logger.warning(f"Could not apply threading optimizations: {e}")
+        
+        params = base_params
         
         # Train model
         self.lgb_model = lgb.train(
@@ -253,13 +294,19 @@ class HighPerformanceMLPredictor:
         # Scale features
         X_scaled = self.scaler.fit_transform(X_train)
         
+        # Get optimized parameters for scikit-learn
+        sklearn_params = {'n_estimators': 50, 'max_depth': 10, 'random_state': 42, 'n_jobs': min(self.cpu_cores, 4)}
+        if HAS_THREADING_OPTIMIZATIONS:
+            try:
+                optimized_sklearn_params = get_sklearn_params()
+                if 'n_jobs' in optimized_sklearn_params:
+                    sklearn_params['n_jobs'] = optimized_sklearn_params['n_jobs']
+                self.logger.debug(f"Applied threading-optimized sklearn params: {optimized_sklearn_params}")
+            except Exception as e:
+                self.logger.warning(f"Could not apply sklearn threading optimizations: {e}")
+        
         # Train Random Forest (fast and robust)
-        self.sklearn_model = RandomForestRegressor(
-            n_estimators=50,  # Moderate for Steam Deck
-            max_depth=10,
-            random_state=42,
-            n_jobs=min(self.cpu_cores, 4)  # Parallel processing
-        )
+        self.sklearn_model = RandomForestRegressor(**sklearn_params)
         
         self.sklearn_model.fit(X_scaled, y_train)
         
@@ -495,6 +542,28 @@ class HighPerformanceMLPredictor:
             scaler_path = output_path / "scaler.pkl"
             joblib.dump(self.scaler, scaler_path)
             self.logger.info(f"sklearn model saved to {sklearn_path}")
+    
+    def cleanup(self):
+        """Cleanup resources and threads"""
+        try:
+            # Clean up models
+            self.lgb_model = None
+            self.sklearn_model = None
+            self.scaler = None
+            
+            # Cleanup threading resources
+            if self.thread_manager:
+                self.thread_manager.shutdown(wait=False)
+                self.thread_manager = None
+            
+            if self.threading_configurator:
+                self.threading_configurator.cleanup()
+                self.threading_configurator = None
+            
+            self.logger.info("ML predictor cleanup completed")
+            
+        except Exception as e:
+            self.logger.error(f"Cleanup error: {e}")
 
 
 # Global instance for easy access

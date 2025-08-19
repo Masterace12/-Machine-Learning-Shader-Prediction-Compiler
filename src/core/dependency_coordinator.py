@@ -38,6 +38,14 @@ from .pure_python_fallbacks import (
     PureSteamDeckDetector, PureThermalMonitor
 )
 
+# Import enhanced installation capabilities
+try:
+    from .enhanced_dependency_installer import SteamDeckDependencyInstaller
+    ENHANCED_INSTALLER_AVAILABLE = True
+except ImportError:
+    ENHANCED_INSTALLER_AVAILABLE = False
+    logger.warning("Enhanced dependency installer not available")
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -141,7 +149,7 @@ DEPENDENCY_SPECS = {
         performance_impact=8.0,
         required=False,
         category='performance',
-        python_versions=['<3.13'],  # Skip on Python 3.13
+        python_versions=[],  # Allow on all Python versions now that numba supports 3.13
         test_function=lambda: __import__('numba').njit(lambda x: x + 1)(5) == 6
     ),
     
@@ -154,7 +162,7 @@ DEPENDENCY_SPECS = {
         performance_impact=2.5,
         required=False,
         category='performance',
-        python_versions=['<3.13'],
+        python_versions=[],  # Allow on all Python versions
         test_function=lambda: __import__('numexpr').evaluate('2 * 3') == 6
     ),
     
@@ -167,7 +175,7 @@ DEPENDENCY_SPECS = {
         performance_impact=1.8,
         required=False,
         category='performance',
-        python_versions=['<3.13'],
+        python_versions=[],  # Allow on all Python versions
         test_function=lambda: hasattr(__import__('bottleneck'), 'nanmean')
     ),
     
@@ -256,6 +264,15 @@ class DependencyCoordinator:
         self.is_steam_deck = PureSteamDeckDetector.is_steam_deck()
         self.thermal_monitor = PureThermalMonitor()
         self.optimization_lock = threading.Lock()
+        
+        # Initialize enhanced installer if available
+        self.installer = None
+        if ENHANCED_INSTALLER_AVAILABLE:
+            try:
+                self.installer = SteamDeckDependencyInstaller()
+                logger.info("Enhanced dependency installer initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize enhanced installer: {e}")
         
         # System information
         self.system_info = {
@@ -967,6 +984,153 @@ class DependencyCoordinator:
         
         return recommendations
     
+    def auto_install_missing_dependencies(self, dependencies: Optional[List[str]] = None) -> Dict[str, Any]:
+        """
+        Automatically install missing dependencies using enhanced installer
+        """
+        if not self.installer:
+            return {
+                'status': 'unavailable',
+                'message': 'Enhanced installer not available',
+                'installed': {},
+                'failed': {}
+            }
+        
+        logger.info("Starting automatic dependency installation...")
+        
+        # Determine which dependencies to install
+        if dependencies:
+            deps_to_install = dependencies
+        else:
+            # Install all missing dependencies that are not available
+            deps_to_install = [
+                name for name, state in self.dependency_states.items()
+                if not state.available and not state.spec.compilation_required
+            ]
+        
+        if not deps_to_install:
+            logger.info("No dependencies need installation")
+            return {
+                'status': 'complete',
+                'message': 'All dependencies already available',
+                'installed': {},
+                'failed': {}
+            }
+        
+        logger.info(f"Installing {len(deps_to_install)} dependencies: {', '.join(deps_to_install)}")
+        
+        # Use enhanced installer
+        installation_results = self.installer.install_multiple_dependencies(deps_to_install)
+        
+        # Re-detect dependencies after installation
+        logger.info("Re-detecting dependencies after installation...")
+        self.detect_all_dependencies(force_refresh=True)
+        
+        # Categorize results
+        successful = {
+            dep: result for dep, result in installation_results.items()
+            if result.success
+        }
+        
+        failed = {
+            dep: result for dep, result in installation_results.items()
+            if not result.success
+        }
+        
+        return {
+            'status': 'complete' if not failed else 'partial',
+            'message': f"Installed {len(successful)}/{len(deps_to_install)} dependencies",
+            'installed': successful,
+            'failed': failed,
+            'total_attempted': len(deps_to_install)
+        }
+    
+    def create_comprehensive_health_report(self) -> Dict[str, Any]:
+        """
+        Create a comprehensive health report including installation options
+        """
+        # Basic validation
+        validation = self.validate_installation()
+        
+        # Enhanced health check if installer available
+        installer_health = None
+        if self.installer:
+            try:
+                installer_health = self.installer.create_dependency_health_check()
+            except Exception as e:
+                logger.warning(f"Enhanced health check failed: {e}")
+        
+        # Combine reports
+        health_report = {
+            'basic_validation': validation,
+            'enhanced_health': installer_health,
+            'system_optimization': self.optimize_for_environment(),
+            'recommendations': self.get_dependency_recommendations(),
+            'installation_options': self._get_installation_options()
+        }
+        
+        # Calculate overall system health
+        basic_health = validation['overall_health']
+        enhanced_health = installer_health['overall_health'] if installer_health else basic_health
+        
+        health_report['overall_system_health'] = max(basic_health, enhanced_health)
+        health_report['health_sources'] = {
+            'basic': basic_health,
+            'enhanced': enhanced_health if installer_health else None
+        }
+        
+        return health_report
+    
+    def _get_installation_options(self) -> Dict[str, Any]:
+        """Get available installation options for missing dependencies"""
+        options = {
+            'enhanced_installer_available': self.installer is not None,
+            'missing_dependencies': [],
+            'recommended_actions': []
+        }
+        
+        # Find missing dependencies
+        for name, state in self.dependency_states.items():
+            if not state.available:
+                dep_info = {
+                    'name': name,
+                    'required': state.spec.required,
+                    'performance_impact': state.spec.performance_impact,
+                    'steam_deck_compatible': state.spec.steam_deck_compatible,
+                    'compilation_required': state.spec.compilation_required,
+                    'fallback_available': state.spec.fallback_available
+                }
+                options['missing_dependencies'].append(dep_info)
+        
+        # Generate recommended actions
+        if options['missing_dependencies']:
+            high_impact_missing = [
+                dep for dep in options['missing_dependencies']
+                if dep['performance_impact'] > 3.0 and not dep['compilation_required']
+            ]
+            
+            if high_impact_missing:
+                options['recommended_actions'].append({
+                    'action': 'install_high_impact',
+                    'dependencies': [dep['name'] for dep in high_impact_missing],
+                    'description': 'Install high-impact dependencies for significant performance improvement'
+                })
+            
+            if self.is_steam_deck:
+                steam_deck_safe = [
+                    dep for dep in options['missing_dependencies']
+                    if dep['steam_deck_compatible'] and not dep['compilation_required']
+                ]
+                
+                if steam_deck_safe:
+                    options['recommended_actions'].append({
+                        'action': 'install_steam_deck_safe',
+                        'dependencies': [dep['name'] for dep in steam_deck_safe],
+                        'description': 'Install Steam Deck compatible dependencies'
+                    })
+        
+        return options
+
     def _log_detection_summary(self) -> None:
         """Log a summary of dependency detection results"""
         total = len(self.dependency_states)
