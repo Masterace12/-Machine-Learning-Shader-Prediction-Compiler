@@ -78,11 +78,20 @@ cd -Machine-Learning-Shader-Prediction-Compiler
 ./scripts/install_fixed.sh --system  # System-wide installation (requires sudo)
 ```
 
-### One-Line Download and Install
+### One-Command Installation (Recommended)
 
 ```bash
-# Download and run the simple installer
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/scripts/install_simple.sh | bash
+# Download and install with one command
+bash <(curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/scripts/web_install.sh)
+```
+
+### Manual Installation (Alternative)
+
+```bash
+# Clone repository and run installer
+git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler.git
+cd -Machine-Learning-Shader-Prediction-Compiler
+./scripts/install_simple.sh
 ```
 
 **What it does:**
@@ -237,11 +246,13 @@ systemctl --user stop shader-predict-compile.service
 
 **Permission denied errors:**
 ```bash
-# Use the simple installer (virtual environment - no permission issues)
-./scripts/install_simple.sh
+# Use the web installer (automatically downloads and installs)
+bash <(curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/scripts/web_install.sh)
 
-# Or download the fixed installer
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/scripts/install_simple.sh | bash
+# Or clone manually and run installer
+git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler.git
+cd -Machine-Learning-Shader-Prediction-Compiler
+./scripts/install_simple.sh
 ```
 
 **Installation fails:**
