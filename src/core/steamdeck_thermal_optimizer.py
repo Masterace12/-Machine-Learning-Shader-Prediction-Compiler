@@ -154,17 +154,18 @@ class SteamDeckThermalOptimizer:
         return PowerProfile.BALANCED
     
     def _get_thermal_limits(self) -> ThermalLimits:
-        """Get thermal limits based on Steam Deck model"""
+        """Get thermal limits based on Steam Deck model with OLED optimizations"""
         if self.model == SteamDeckModel.OLED:
-            # OLED model (6nm) runs cooler and more efficiently
+            # OLED model (6nm Phoenix APU) runs cooler and more efficiently
+            # Enhanced thermal design allows for higher sustained performance
             return ThermalLimits(
-                normal_temp=70.0,
-                warning_temp=82.0,
-                critical_temp=92.0,
-                shutdown_temp=102.0
+                normal_temp=68.0,      # Lower baseline for better sustained performance
+                warning_temp=84.0,     # Higher threshold due to better cooling
+                critical_temp=94.0,    # Higher critical temp
+                shutdown_temp=104.0    # Higher emergency threshold
             )
         elif self.model == SteamDeckModel.LCD:
-            # LCD model (7nm) runs hotter
+            # LCD model (7nm Van Gogh APU) runs hotter
             return ThermalLimits(
                 normal_temp=75.0,
                 warning_temp=85.0,
@@ -295,17 +296,29 @@ class SteamDeckThermalOptimizer:
         return False
     
     def get_optimal_thread_count(self) -> int:
-        """Get optimal thread count based on thermal state"""
+        """Get optimal thread count based on thermal state with OLED model optimizations"""
         thermal_state = self.get_thermal_state()
         
-        if thermal_state == "critical":
-            return 1  # Minimal threading
-        elif thermal_state == "throttling":
-            return 2  # Reduced threading
-        elif thermal_state == "warm":
-            return 4  # Normal threading
+        # OLED model can handle more threads due to better cooling
+        if self.model == SteamDeckModel.OLED:
+            if thermal_state == "critical":
+                return 1  # Minimal threading
+            elif thermal_state == "throttling":
+                return 3  # Better thermal headroom allows more threads
+            elif thermal_state == "warm":
+                return 6  # OLED can sustain higher performance
+            else:
+                return 8  # Maximum threading for OLED (better cooling)
         else:
-            return 6  # Maximum threading
+            # LCD or unknown model - conservative threading
+            if thermal_state == "critical":
+                return 1  # Minimal threading
+            elif thermal_state == "throttling":
+                return 2  # Reduced threading
+            elif thermal_state == "warm":
+                return 4  # Normal threading
+            else:
+                return 6  # Maximum threading for LCD
     
     def get_ml_performance_target(self) -> str:
         """Get ML performance target based on thermal/power state"""
@@ -317,28 +330,57 @@ class SteamDeckThermalOptimizer:
             return "minimal"  # Fastest inference, lowest power
     
     def optimize_for_gaming(self) -> Dict[str, Any]:
-        """Apply gaming-specific thermal optimizations"""
-        optimizations = {
-            "background_threads": 2,  # Minimal background work
-            "ml_threads": 1,          # Single ML thread
-            "compilation_paused": self.get_thermal_state() in ["throttling", "critical"],
-            "memory_aggressive_gc": True,
-            "thermal_monitoring_interval": 2.0  # More frequent monitoring
-        }
+        """Apply gaming-specific thermal optimizations with OLED model enhancements"""
+        thermal_state = self.get_thermal_state()
         
-        self.logger.info(f"Gaming optimizations applied: {optimizations}")
+        # OLED model can sustain better performance during gaming
+        if self.model == SteamDeckModel.OLED:
+            optimizations = {
+                "background_threads": 3,  # OLED can handle more background work
+                "ml_threads": 2,          # Better cooling allows dual ML threads
+                "compilation_paused": thermal_state in ["throttling", "critical"],
+                "memory_aggressive_gc": False,  # Less aggressive GC due to better thermal headroom
+                "thermal_monitoring_interval": 1.5,  # More frequent monitoring for OLED
+                "shader_cache_priority": "high",  # Prioritize shader compilation
+                "gpu_memory_optimization": True,  # Optimize unified memory usage
+                "predictive_cooling": True  # Enable predictive thermal management
+            }
+        else:
+            # LCD or unknown model - conservative settings
+            optimizations = {
+                "background_threads": 2,  # Minimal background work
+                "ml_threads": 1,          # Single ML thread
+                "compilation_paused": thermal_state in ["throttling", "critical"],
+                "memory_aggressive_gc": True,
+                "thermal_monitoring_interval": 2.0,  # Standard monitoring
+                "shader_cache_priority": "normal",
+                "gpu_memory_optimization": False,
+                "predictive_cooling": False
+            }
+        
+        self.logger.info(f"Gaming optimizations applied for {self.model.value}: {optimizations}")
         return optimizations
     
     def get_power_budget_estimate(self) -> float:
-        """Estimate available power budget for background work"""
+        """Estimate available power budget for background work with OLED optimizations"""
         thermal_state = self.get_thermal_state()
         
-        if self.power_profile == PowerProfile.BATTERY_SAVER:
-            base_budget = 1.0  # 1W for background work
-        elif self.power_profile == PowerProfile.BALANCED:
-            base_budget = 2.5  # 2.5W for background work
-        else:  # PERFORMANCE
-            base_budget = 4.0  # 4W for background work
+        # OLED model has better power efficiency
+        if self.model == SteamDeckModel.OLED:
+            if self.power_profile == PowerProfile.BATTERY_SAVER:
+                base_budget = 1.2  # Better efficiency allows slightly higher budget
+            elif self.power_profile == PowerProfile.BALANCED:
+                base_budget = 3.0  # Higher sustained performance
+            else:  # PERFORMANCE
+                base_budget = 5.0  # OLED can sustain higher power draw
+        else:
+            # LCD or unknown model
+            if self.power_profile == PowerProfile.BATTERY_SAVER:
+                base_budget = 1.0  # 1W for background work
+            elif self.power_profile == PowerProfile.BALANCED:
+                base_budget = 2.5  # 2.5W for background work
+            else:  # PERFORMANCE
+                base_budget = 4.0  # 4W for background work
         
         # Reduce budget based on thermal state
         thermal_multiplier = {

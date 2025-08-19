@@ -85,9 +85,9 @@ class SteamDeckThreadDiagnostics:
         self._thread_start_times: Dict[int, float] = {}
         self._thread_libraries: Dict[int, str] = {}
         
-        # System limits and thresholds
-        self.max_threads_warning = 30
-        self.max_threads_critical = 50
+        # System limits and thresholds (Steam Deck OLED optimized)
+        self.max_threads_warning = 6   # Warn at 6 threads for Steam Deck
+        self.max_threads_critical = 8  # Critical at 8 threads for Steam Deck
         self.cpu_time_threshold = 5.0  # 5 seconds
         self.memory_threshold_mb = 100
         
@@ -302,24 +302,24 @@ class SteamDeckThreadDiagnostics:
         ml_libraries = ['lightgbm', 'sklearn', 'numba', 'numpy']
         total_ml_threads = sum(len(library_threads[lib]) for lib in ml_libraries if lib in library_threads)
         
-        if total_ml_threads > 6:  # Steam Deck shouldn't have more than 6 ML threads
+        if total_ml_threads > 2:  # Steam Deck OLED shouldn't have more than 2 ML threads
             self._report_issue(ThreadIssue(
                 issue_type=ThreadIssueType.LIBRARY_CONFLICT,
                 severity="high",
-                description=f"Excessive ML library threads: {total_ml_threads} (recommended: ≤6 for Steam Deck)",
-                suggested_fix="Configure ML libraries with proper thread limits (OMP_NUM_THREADS=2, etc.)"
+                description=f"Excessive ML library threads: {total_ml_threads} (recommended: ≤2 for Steam Deck OLED)",
+                suggested_fix="Configure ML libraries with proper thread limits (OMP_NUM_THREADS=1, LIGHTGBM_NUM_THREADS=1, etc.)"
             ))
         
         # Check for specific library conflicts
         if 'lightgbm' in library_threads and 'sklearn' in library_threads:
             lgb_count = len(library_threads['lightgbm'])
             sklearn_count = len(library_threads['sklearn'])
-            if lgb_count + sklearn_count > 4:
+            if lgb_count + sklearn_count > 2:  # Steam Deck OLED: max 2 total ML threads
                 self._report_issue(ThreadIssue(
                     issue_type=ThreadIssueType.LIBRARY_CONFLICT,
-                    severity="medium",
-                    description=f"LightGBM ({lgb_count}) + sklearn ({sklearn_count}) thread conflict detected",
-                    suggested_fix="Ensure both libraries are configured with complementary thread limits"
+                    severity="high",
+                    description=f"LightGBM ({lgb_count}) + sklearn ({sklearn_count}) thread conflict detected (Steam Deck max: 2)",
+                    suggested_fix="Set LIGHTGBM_NUM_THREADS=1 and sklearn n_jobs=1 for Steam Deck OLED"
                 ))
     
     def _check_resource_limits(self):
@@ -342,14 +342,14 @@ class SteamDeckThreadDiagnostics:
                     suggested_fix="Check for memory leaks in thread operations and implement proper cleanup"
                 ))
         
-        # Check current memory usage
+        # Check current memory usage (Steam Deck has 16GB shared with GPU)
         current_memory = recent_data[-1]['memory_rss_mb']
-        if current_memory > 1000:  # 1GB threshold for Steam Deck
+        if current_memory > 500:  # 500MB threshold for Steam Deck (more conservative)
             self._report_issue(ThreadIssue(
                 issue_type=ThreadIssueType.RESOURCE_EXHAUSTION,
                 severity="critical",
-                description=f"High memory usage: {current_memory:.1f}MB",
-                suggested_fix="Reduce thread count or implement memory-efficient algorithms"
+                description=f"High memory usage: {current_memory:.1f}MB (Steam Deck threshold: 500MB)",
+                suggested_fix="Reduce thread count or implement memory-efficient algorithms for Steam Deck"
             ))
     
     def _report_issue(self, issue: ThreadIssue):
@@ -470,14 +470,16 @@ class SteamDeckThreadDiagnostics:
         current_data = self.thread_history[-1]
         thread_count = current_data['thread_count']
         
-        # Thread count recommendations
+        # Thread count recommendations for Steam Deck OLED
         if thread_count > self.max_threads_critical:
-            recommendations.append("CRITICAL: Reduce thread count immediately - system may become unstable")
-            recommendations.append("Implement thread pooling with fixed limits")
-            recommendations.append("Review all library threading configurations")
+            recommendations.append("CRITICAL: Steam Deck OLED thread limit exceeded - system instability likely")
+            recommendations.append("Immediately set OMP_NUM_THREADS=1, LIGHTGBM_NUM_THREADS=1")
+            recommendations.append("Stop all non-essential background processes")
+            recommendations.append("Restart application with proper environment variables")
         elif thread_count > self.max_threads_warning:
-            recommendations.append("Consider implementing thread pooling to reduce overhead")
-            recommendations.append("Review threading configuration for ML libraries")
+            recommendations.append("Steam Deck OLED thread warning: Reduce threads to prevent 'can't start new thread' errors")
+            recommendations.append("Set all ML library thread limits to 1 (OMP_NUM_THREADS=1, etc.)")
+            recommendations.append("Enable gaming mode detection to reduce threads during gaming")
         
         # Library-specific recommendations
         library_threads = defaultdict(int)
@@ -485,19 +487,21 @@ class SteamDeckThreadDiagnostics:
             if thread_info.library_origin:
                 library_threads[thread_info.library_origin] += 1
         
-        if library_threads.get('lightgbm', 0) > 2:
-            recommendations.append("Configure LightGBM with num_threads=2 for Steam Deck")
+        if library_threads.get('lightgbm', 0) > 1:
+            recommendations.append("Configure LightGBM with LIGHTGBM_NUM_THREADS=1 for Steam Deck OLED")
         
-        if library_threads.get('sklearn', 0) > 2:
-            recommendations.append("Configure scikit-learn with n_jobs=2 for Steam Deck")
+        if library_threads.get('sklearn', 0) > 1:
+            recommendations.append("Configure scikit-learn with n_jobs=1 for Steam Deck OLED")
         
-        if sum(library_threads.get(lib, 0) for lib in ['numpy', 'numba']) > 3:
-            recommendations.append("Set OMP_NUM_THREADS=2 and NUMBA_NUM_THREADS=2")
+        if sum(library_threads.get(lib, 0) for lib in ['numpy', 'numba']) > 1:
+            recommendations.append("Set OMP_NUM_THREADS=1 and NUMBA_NUM_THREADS=1 for Steam Deck OLED")
         
-        # Steam Deck specific recommendations
+        # Steam Deck OLED specific recommendations
         if self.is_steam_deck:
-            recommendations.append("Steam Deck detected: Keep total threads ≤8 for optimal performance")
+            recommendations.append("Steam Deck OLED detected: Keep total threads ≤6 for optimal performance")
+            recommendations.append("Set all environment variables: export OMP_NUM_THREADS=1 LIGHTGBM_NUM_THREADS=1 MKL_NUM_THREADS=1")
             recommendations.append("Enable thermal-aware thread scaling for battery life")
+            recommendations.append("Consider running in gaming mode during gameplay to minimize background threads")
         
         return recommendations
     

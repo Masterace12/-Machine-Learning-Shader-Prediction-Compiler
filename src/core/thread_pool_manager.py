@@ -53,20 +53,20 @@ class ThreadPoolConfig:
     """Thread pool configuration optimized for Steam Deck"""
     
     def __init__(self):
-        # Steam Deck specific limits (conservative for gaming)
-        self.max_total_threads = 6  # Conservative limit for 8-core APU
-        self.max_ml_threads = 2     # LightGBM/sklearn inference
-        self.max_compilation_threads = 2  # Background shader compilation
-        self.max_monitoring_threads = 1   # Thermal/performance monitoring
-        self.max_cleanup_threads = 1      # Garbage collection, cache cleanup
+        # Steam Deck OLED specific limits (ultra-conservative for gaming)
+        self.max_total_threads = 4  # Ultra-conservative limit for Steam Deck OLED
+        self.max_ml_threads = 1     # Single ML inference thread
+        self.max_compilation_threads = 1  # Single background shader compilation thread
+        self.max_monitoring_threads = 1   # Single thermal/performance monitoring
+        self.max_cleanup_threads = 1      # Single cleanup thread
         
-        # Thread pool sizes by priority
+        # Thread pool sizes by priority (reduced for Steam Deck OLED)
         self.priority_limits = {
             ThreadPriority.CRITICAL: 1,
-            ThreadPriority.HIGH: 2,
-            ThreadPriority.NORMAL: 2,
-            ThreadPriority.LOW: 2,
-            ThreadPriority.IDLE: 1
+            ThreadPriority.HIGH: 1,     # ML prediction - single thread only
+            ThreadPriority.NORMAL: 1,   # Background compilation - single thread only
+            ThreadPriority.LOW: 1,      # Monitoring - single thread only
+            ThreadPriority.IDLE: 0      # No idle threads on Steam Deck
         }
         
         # Timeout settings
@@ -260,23 +260,78 @@ class SteamDeckThreadManager:
             return ResourceState.NORMAL
     
     def _check_gaming_mode(self):
-        """Check if gaming mode is active"""
+        """Check if gaming mode is active with enhanced Steam Deck detection"""
         current_time = time.time()
-        if current_time - self._last_gaming_check < 10.0:  # Cache for 10 seconds
+        if current_time - self._last_gaming_check < 5.0:  # Check more frequently
             return
         
         self._last_gaming_check = current_time
         
         try:
-            # Check for game processes (simplified detection)
-            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent']):
-                if proc.info['cpu_percent'] > 30 and proc.info['name'] not in ['python3', 'python', 'steam']:
-                    self._gaming_mode_active = True
-                    return
+            gaming_indicators = 0
+            high_cpu_processes = []
             
+            # Enhanced gaming detection for Steam Deck
+            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+                try:
+                    name = proc.info['name'].lower()
+                    cpu_percent = proc.info['cpu_percent'] or 0
+                    memory_percent = proc.info['memory_percent'] or 0
+                    
+                    # Skip system and ML processes
+                    skip_processes = [
+                        'python3', 'python', 'steam', 'steamwebhelper', 'systemd',
+                        'kworker', 'lightgbm', 'sklearn', 'jupyter', 'chrome', 'firefox'
+                    ]
+                    
+                    if any(skip in name for skip in skip_processes):
+                        continue
+                    
+                    # Check for gaming indicators
+                    if cpu_percent > 20:  # Lower threshold for Steam Deck
+                        high_cpu_processes.append((name, cpu_percent))
+                        
+                        # Common gaming process patterns
+                        gaming_patterns = [
+                            'game', 'unity', 'unreal', 'ue4', 'ue5', 'godot',
+                            'steamapps', 'proton', 'wine', 'lutris',
+                            '.exe', 'vrmonitor', 'openvr', 'steamvr',
+                            'csgo', 'dota', 'tf2', 'portal', 'halflife'
+                        ]
+                        
+                        if any(pattern in name for pattern in gaming_patterns):
+                            gaming_indicators += 2  # Strong indicator
+                        elif cpu_percent > 40:
+                            gaming_indicators += 1  # Moderate indicator
+                    
+                    # High memory usage could indicate gaming
+                    if memory_percent > 10:  # 1.6GB+ on 16GB system
+                        gaming_indicators += 1
+                        
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            
+            # Determine gaming state
+            previous_state = self._gaming_mode_active
+            
+            if gaming_indicators >= 2:
+                self._gaming_mode_active = True
+            elif gaming_indicators == 0:
+                self._gaming_mode_active = False
+            # Keep previous state if indicators == 1 (ambiguous)
+            
+            # Log gaming mode changes
+            if previous_state != self._gaming_mode_active:
+                if self._gaming_mode_active:
+                    self.logger.info(f"Gaming mode activated (indicators: {gaming_indicators}, "
+                                   f"high CPU processes: {high_cpu_processes[:3]})")
+                else:
+                    self.logger.info("Gaming mode deactivated - returning to normal thread limits")
+                    
+        except Exception as e:
+            self.logger.warning(f"Gaming mode detection error: {e}")
+            # Default to non-gaming mode on error
             self._gaming_mode_active = False
-        except Exception:
-            pass
     
     def _adapt_thread_limits(self):
         """Adapt thread limits based on resource state"""
@@ -291,21 +346,21 @@ class SteamDeckThreadManager:
                     ThreadPriority.IDLE: 0
                 }
             elif self._resource_state == ResourceState.CONSTRAINED:
-                # Reduce threads
+                # Severely reduce threads for Steam Deck constraints
                 new_limits = {
                     ThreadPriority.CRITICAL: 1,
                     ThreadPriority.HIGH: 1,
-                    ThreadPriority.NORMAL: 1,
-                    ThreadPriority.LOW: 1,
+                    ThreadPriority.NORMAL: 0,  # Pause compilation under constraint
+                    ThreadPriority.LOW: 0,     # Pause monitoring under constraint
                     ThreadPriority.IDLE: 0
                 }
             elif self._gaming_mode_active:
-                # Gaming mode - minimal background work
+                # Gaming mode - absolute minimal background work
                 new_limits = {
                     ThreadPriority.CRITICAL: 1,
-                    ThreadPriority.HIGH: 1,
-                    ThreadPriority.NORMAL: 1,  # Reduced compilation
-                    ThreadPriority.LOW: 1,
+                    ThreadPriority.HIGH: 0,    # No ML prediction during gaming
+                    ThreadPriority.NORMAL: 0,  # No compilation during gaming
+                    ThreadPriority.LOW: 0,     # No monitoring during gaming
                     ThreadPriority.IDLE: 0
                 }
             else:
@@ -483,41 +538,101 @@ class SteamDeckThreadManager:
     def configure_ml_libraries(self):
         """Configure ML libraries for optimal threading on Steam Deck"""
         # Set environment variables for thread limits (critical - must be set before imports)
+        # Ultra-conservative threading for Steam Deck OLED to prevent "can't start new thread" errors
         steam_deck_env = {
-            'OMP_NUM_THREADS': '2',
-            'MKL_NUM_THREADS': '2', 
-            'OPENBLAS_NUM_THREADS': '2',
-            'NUMEXPR_NUM_THREADS': '2',
-            'OMP_DYNAMIC': 'TRUE',
-            'OMP_WAIT_POLICY': 'PASSIVE',
-            'MALLOC_ARENA_MAX': '2',  # Reduce memory fragmentation
-            'LIGHTGBM_NUM_THREADS': '2'  # For newer LightGBM versions
+            'OMP_NUM_THREADS': '1',      # Single OpenMP thread
+            'MKL_NUM_THREADS': '1',      # Single Intel MKL thread
+            'OPENBLAS_NUM_THREADS': '1', # Single OpenBLAS thread
+            'NUMEXPR_NUM_THREADS': '1',  # Single NumExpr thread
+            'LIGHTGBM_NUM_THREADS': '1', # Single LightGBM thread
+            'OMP_DYNAMIC': 'FALSE',      # Disable dynamic thread adjustment
+            'OMP_WAIT_POLICY': 'PASSIVE',# Reduce CPU spinning
+            'OMP_NESTED': 'FALSE',       # Disable nested parallelism
+            'OMP_THREAD_LIMIT': '4',     # Hard limit on total OpenMP threads
+            'MALLOC_ARENA_MAX': '1',     # Minimize memory fragmentation
+            'NUMBA_NUM_THREADS': '1',    # Single Numba thread
+            'VECLIB_MAXIMUM_THREADS': '1', # Single BLAS thread (macOS/general)
+            'BLIS_NUM_THREADS': '1'      # Single BLIS thread
         }
         
         for var, value in steam_deck_env.items():
             os.environ[var] = value
         
-        # Configure LightGBM (handle both old and new API)
+        # Configure LightGBM with proper API for 4.6.0+
         try:
             import lightgbm as lgb
             
-            # Try new parameter-based approach first
-            if hasattr(lgb, 'LGBMRegressor'):
-                # Set default parameters for all LightGBM models
-                lgb.set_option('num_threads', 2)
-                lgb.set_option('force_row_wise', True)  # Better for Steam Deck memory
-                lgb.set_option('histogram_pool_size', 128)  # Limit memory usage
-                self.logger.info("Configured LightGBM with new parameter API")
+            # LightGBM 4.6.0+ ONLY supports environment variable threading control
+            # All set_option() and set_number_threads() methods have been removed
             
-            # Fallback to old API if available
-            elif hasattr(lgb, 'set_number_threads'):
-                lgb.set_number_threads(2)
-                self.logger.info("Configured LightGBM with legacy API")
-            else:
-                self.logger.info("LightGBM threading controlled via environment variables")
+            # Verify LightGBM version and warn about compatibility
+            try:
+                version_info = lgb.__version__
+                major, minor, patch = map(int, version_info.split('.')[:3])
                 
-        except (ImportError, AttributeError) as e:
-            self.logger.warning(f"LightGBM configuration issue: {e}")
+                if major >= 4 and minor >= 6:
+                    self.logger.info(f"LightGBM {version_info} detected - modern version using environment variables")
+                elif major >= 3:
+                    self.logger.info(f"LightGBM {version_info} detected - using environment variable threading")
+                else:
+                    self.logger.warning(f"LightGBM {version_info} is very old - may have compatibility issues")
+                    
+            except (AttributeError, ValueError) as version_error:
+                self.logger.warning(f"Could not determine LightGBM version: {version_error}")
+            
+            # Environment variables are already set above, just verify
+            lgb_threads = os.environ.get('LIGHTGBM_NUM_THREADS', 'not set')
+            if lgb_threads != 'not set':
+                self.logger.info(f"LightGBM threading configured via LIGHTGBM_NUM_THREADS={lgb_threads}")
+            else:
+                self.logger.warning("LIGHTGBM_NUM_THREADS not set - using LightGBM defaults")
+            
+            # Store Steam Deck optimized parameters for model creation
+            if not hasattr(lgb, '_steamdeck_optimized_params'):
+                lgb._steamdeck_optimized_params = {
+                    'num_threads': 2,
+                    'force_row_wise': True,
+                    'device_type': 'cpu',
+                    'max_bin': 255,
+                    'histogram_pool_size': 128,
+                    'verbose': -1,
+                    'min_data_in_leaf': 10,
+                    'max_depth': 6,
+                    'num_leaves': 31,
+                    'learning_rate': 0.1,
+                    'feature_fraction': 0.8,
+                    'bagging_fraction': 0.8,
+                    'bagging_freq': 1,
+                    'lambda_l1': 0.1,
+                    'lambda_l2': 0.1,
+                    'min_split_gain': 0.1,
+                    'reg_alpha': 0.1,
+                    'reg_lambda': 0.1,
+                    'objective': 'regression',
+                    'metric': 'rmse',
+                    'boosting_type': 'gbdt',
+                    'subsample': 0.8,
+                    'subsample_freq': 1,
+                    'colsample_bytree': 0.8,
+                    'min_child_samples': 5,
+                    'min_child_weight': 0.001,
+                    'subsample_for_bin': 200000,
+                    'enable_sparse': True,
+                    'is_unbalance': False,
+                    'boost_from_average': True,
+                    'num_iterations': 100,
+                    'early_stopping_round': 10,
+                    'first_metric_only': True,
+                    'seed': 42,
+                    'deterministic': True,
+                }
+                self.logger.info("Stored Steam Deck optimized LightGBM parameters")
+                
+        except ImportError:
+            self.logger.debug("LightGBM not available - skipping configuration")
+        except Exception as e:
+            self.logger.error(f"LightGBM configuration failed: {e}")
+            self.logger.debug("Continuing with default LightGBM settings")
         
         # Configure scikit-learn for Steam Deck
         try:
@@ -539,17 +654,26 @@ class SteamDeckThreadManager:
         except ImportError:
             pass
         
-        # Configure Numba for Steam Deck APU
+        # Configure Numba for Steam Deck OLED (single-threaded)
         try:
             import numba
             if hasattr(numba, 'set_num_threads'):
-                numba.set_num_threads(2)
-            # Additional Numba optimizations
-            numba.config.THREADING_LAYER = 'tbb'  # Better threading layer
-            numba.config.NUMBA_NUM_THREADS = 2
-            self.logger.info("Configured Numba for 2 threads with TBB")
-        except (ImportError, AttributeError):
-            pass
+                try:
+                    numba.set_num_threads(1)  # Single thread for Steam Deck OLED
+                except ValueError as e:
+                    # If Numba is built without threading support, skip
+                    self.logger.warning(f"Numba threading limitation: {e}")
+            
+            # Additional Numba optimizations for Steam Deck
+            if hasattr(numba, 'config'):
+                numba.config.THREADING_LAYER = 'workqueue'  # Better for single thread
+                numba.config.NUMBA_NUM_THREADS = 1
+            
+            self.logger.info("Configured Numba for 1 thread (Steam Deck OLED)")
+        except (ImportError, AttributeError) as e:
+            self.logger.debug(f"Numba not available or configured: {e}")
+        except Exception as e:
+            self.logger.warning(f"Numba configuration failed: {e}")
         
         # Configure NumPy BLAS threading 
         try:
@@ -564,11 +688,13 @@ class SteamDeckThreadManager:
         # Configure PyTorch if available (some dependencies might use it)
         try:
             import torch
-            torch.set_num_threads(2)
+            torch.set_num_threads(1)  # Single thread for Steam Deck OLED
             torch.set_num_interop_threads(1)
-            self.logger.info("Configured PyTorch threading")
+            self.logger.info("Configured PyTorch for single-threaded operation")
         except ImportError:
-            pass
+            self.logger.debug("PyTorch not available")
+        except Exception as e:
+            self.logger.warning(f"PyTorch configuration failed: {e}")
         
         self.logger.info("ML library threading configured for Steam Deck APU")
     

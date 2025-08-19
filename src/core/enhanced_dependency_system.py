@@ -77,7 +77,7 @@ except ImportError as e:
     class RuntimeDependencyManager:
         def __init__(self): 
             self.current_profile = None
-            self.performance_profiles = []
+            self.available_profiles = {}  # Changed from performance_profiles to available_profiles
         def get_current_conditions(self): 
             from collections import namedtuple
             Conditions = namedtuple('Conditions', 'cpu_temperature memory_usage_mb thermal_state memory_pressure power_state is_gaming_mode')

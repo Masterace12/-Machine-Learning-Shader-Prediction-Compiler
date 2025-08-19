@@ -1,26 +1,123 @@
 {
-  "version": "2.0.0-optimized",
+  "version": "2.1.0-oled-optimized",
   "hardware_profile": "steamdeck_oled",
+  "description": "Comprehensive OLED Steam Deck optimizations with enhanced performance",
+  
   "system": {
-    "max_memory_mb": 200,
-    "max_compilation_threads": 6,
+    "max_memory_mb": 256,
+    "max_compilation_threads": 8,
     "enable_async": true,
-    "enable_thermal_management": true
+    "enable_thermal_management": true,
+    "enable_predictive_cooling": true,
+    "oled_optimized": true,
+    "unified_memory_aware": true,
+    "background_optimization": true
   },
+  
   "thermal": {
-    "apu_max": 97.0,
-    "cpu_max": 87.0,
+    "apu_max": 94.0,
+    "cpu_max": 84.0,
     "gpu_max": 92.0,
-    "prediction_threshold": 82.0
+    "prediction_threshold": 82.0,
+    "normal_threshold": 68.0,
+    "warning_threshold": 84.0,
+    "critical_threshold": 94.0,
+    "monitoring_interval": 1.5,
+    "oled_enhanced_cooling": true,
+    "sustained_performance_target": 1400,
+    "boost_duration_ms": 15000
   },
+  
   "ml": {
     "backend": "lightgbm",
-    "cache_size": 1000,
-    "enable_training": true
+    "cache_size": 1500,
+    "enable_training": true,
+    "training_threads": 4,
+    "inference_threads": 2,
+    "memory_limit_mb": 128,
+    "oled_performance_mode": true
   },
+  
   "cache": {
-    "hot_cache_size": 100,
-    "warm_cache_size": 500,
-    "enable_compression": true
+    "hot_cache_size": 200,
+    "warm_cache_size": 800,
+    "cold_cache_size": 2000,
+    "enable_compression": true,
+    "compression_level": 5,
+    "memory_mapped": true,
+    "prefetch_enabled": true,
+    "oled_burst_mode": true,
+    "adaptive_compression": true,
+    "max_cache_size_mb": 1024
+  },
+  
+  "gpu": {
+    "rdna2_optimized": true,
+    "wave_mode": "auto",
+    "compiler_backend": "aco",
+    "enable_ngg": true,
+    "enable_mesh_shaders": true,
+    "memory_pool": "shared",
+    "max_power_watts": 18.0,
+    "sustained_clock_target": 1400,
+    "memory_bandwidth_optimization": true,
+    "infinity_cache_aware": true
+  },
+  
+  "power": {
+    "battery_capacity_wh": 50.0,
+    "display_efficiency_factor": 1.15,
+    "apu_efficiency_factor": 1.2,
+    "power_profiles": {
+      "battery_saver": {
+        "max_threads": 2,
+        "max_power_budget": 1.2,
+        "thermal_target": 70.0
+      },
+      "balanced": {
+        "max_threads": 6,
+        "max_power_budget": 3.0,
+        "thermal_target": 78.0
+      },
+      "performance": {
+        "max_threads": 8,
+        "max_power_budget": 5.0,
+        "thermal_target": 82.0
+      },
+      "docked": {
+        "max_threads": 8,
+        "max_power_budget": 8.0,
+        "thermal_target": 84.0
+      }
+    }
+  },
+  
+  "gaming": {
+    "background_threads": 3,
+    "ml_threads": 2,
+    "memory_aggressive_gc": false,
+    "shader_cache_priority": "high",
+    "predictive_cooling": true,
+    "compilation_during_gaming": true,
+    "thermal_monitoring_interval": 1.0
+  },
+  
+  "memory": {
+    "unified_pool_size_gb": 16.0,
+    "gpu_reserved_mb": 1024,
+    "shader_cache_reserved_mb": 512,
+    "system_reserved_mb": 2048,
+    "compression_threshold": 0.7,
+    "memory_pressure_threshold": 0.85,
+    "oled_memory_optimization": true
+  },
+  
+  "performance": {
+    "enable_auto_tuning": true,
+    "learning_rate": 0.1,
+    "adaptation_interval": 300,
+    "thermal_prediction_window": 25,
+    "workload_detection": true,
+    "oled_specific_tuning": true
   }
 }

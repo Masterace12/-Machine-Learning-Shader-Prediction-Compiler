@@ -1,27 +1,34 @@
 # ML Shader Prediction Compiler - High-Performance ML System
-# CRITICAL: All ML dependencies are REQUIRED for operation
+# Core dependencies for machine learning shader compilation and optimization
 
-# MANDATORY: Core ML and Scientific Computing
-numpy>=2.0.0
-scikit-learn>=1.7.0
-lightgbm>=4.0.0
+# Core ML and Scientific Computing (REQUIRED)
+numpy>=1.20.0,<3.0.0  # NumPy 2.x compatible
+scikit-learn>=1.0.0,<2.0.0  # Stable ML algorithms
+lightgbm>=3.0.0,<5.0.0  # High-performance gradient boosting
 
-# MANDATORY: System Integration
-psutil>=5.8.0
-requests>=2.25.0
+# System Integration (REQUIRED)
+psutil>=5.8.0,<7.0.0  # System monitoring
+requests>=2.25.0,<3.0.0  # HTTP client
 
-# MANDATORY: High-Performance Optimizations
-numba>=0.60.0
-msgpack>=1.0.0
-zstandard>=0.20.0
-numexpr>=2.10.0
-bottleneck>=1.3.0
+# High-Performance Optimizations (REQUIRED)
+numba>=0.56.0,<1.0.0  # JIT compilation for NumPy
+msgpack>=1.0.0,<2.0.0  # Fast serialization
+zstandard>=0.20.0,<1.0.0  # High-performance compression
+numexpr>=2.8.0,<3.0.0  # Fast numerical expressions
+bottleneck>=1.3.0,<2.0.0  # Fast NumPy array functions
 
-# MANDATORY: Steam Deck Integration (Linux only)
-dbus-next>=0.2.0; platform_system=="Linux"
-distro>=1.6.0
+# Data Validation and Async I/O (REQUIRED)
+pydantic>=1.10.0,<3.0.0  # Data validation using Python type annotations
+aiofiles>=0.8.0,<24.0.0  # Async file operations
+
+# Steam Deck Integration (Linux only)
+dbus-next>=0.2.0,<1.0.0; platform_system=="Linux"  # D-Bus integration
+distro>=1.6.0,<2.0.0  # Linux distribution detection
 
 # Optional: Development Tools
-aiofiles>=0.8.0
 pytest>=7.0.0; extra == "dev"
+pytest-cov>=4.0.0; extra == "dev"
+pytest-asyncio>=0.20.0; extra == "dev"
 black>=22.0.0; extra == "dev"
+ruff>=0.0.260; extra == "dev"
+mypy>=1.0.0; extra == "dev"

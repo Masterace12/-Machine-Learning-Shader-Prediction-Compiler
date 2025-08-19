@@ -170,11 +170,11 @@ class SteamDeckOptimizer:
         # Detect storage type
         storage_type = self._detect_storage_type()
         
-        # Model-specific configurations
+        # Model-specific configurations with enhanced OLED optimizations
         if model == 'oled':
-            battery_capacity = 50.0  # Wh
+            battery_capacity = 50.0  # Wh (25% larger battery)
             display_resolution = (1280, 800)
-            thermal_limit = 85.0
+            thermal_limit = 82.0  # Better cooling allows lower thermal target
         else:  # LCD or unknown
             battery_capacity = 40.0  # Wh
             display_resolution = (1280, 800)
@@ -301,30 +301,38 @@ class SteamDeckOptimizer:
     def _setup_steam_deck_profiles(self) -> None:
         """Setup Steam Deck specific performance profiles"""
         
-        # Maximum performance profile (docked/AC power)
+        # Maximum performance profile (docked/AC power) with OLED optimizations
+        oled_max_power = 22.0 if self.hardware_profile and self.hardware_profile.model == 'oled' else 20.0
+        oled_gpu_limit = 18 if self.hardware_profile and self.hardware_profile.model == 'oled' else 15
+        
         self.performance_profiles['maximum'] = {
-            'description': 'Maximum performance for docked Steam Deck',
+            'description': 'Maximum performance for docked Steam Deck (OLED enhanced)',
             'cpu_governor': 'performance',
             'cpu_max_freq_pct': 100,
-            'gpu_power_limit': 15,
+            'gpu_power_limit': oled_gpu_limit,
             'memory_aggressive': True,
             'ml_dependencies': ['numpy', 'scikit-learn', 'lightgbm', 'numba'],
-            'thermal_limit': 85.0,
-            'power_limit_watts': 20.0,
-            'battery_usage': 'unlimited'
+            'thermal_limit': 82.0 if self.hardware_profile and self.hardware_profile.model == 'oled' else 85.0,
+            'power_limit_watts': oled_max_power,
+            'battery_usage': 'unlimited',
+            'oled_optimized': self.hardware_profile and self.hardware_profile.model == 'oled'
         }
         
-        # Balanced profile (default)
+        # Balanced profile (default) with OLED efficiency improvements
+        oled_balanced_power = 16.5 if self.hardware_profile and self.hardware_profile.model == 'oled' else 15.0
+        oled_balanced_gpu = 14 if self.hardware_profile and self.hardware_profile.model == 'oled' else 12
+        
         self.performance_profiles['balanced'] = {
-            'description': 'Balanced performance and efficiency',
+            'description': 'Balanced performance and efficiency (OLED optimized)',
             'cpu_governor': 'powersave',
-            'cpu_max_freq_pct': 80,
-            'gpu_power_limit': 12,
+            'cpu_max_freq_pct': 85 if self.hardware_profile and self.hardware_profile.model == 'oled' else 80,
+            'gpu_power_limit': oled_balanced_gpu,
             'memory_aggressive': False,
             'ml_dependencies': ['numpy', 'scikit-learn', 'psutil'],
-            'thermal_limit': 80.0,
-            'power_limit_watts': 15.0,
-            'battery_usage': 'moderate'
+            'thermal_limit': 78.0 if self.hardware_profile and self.hardware_profile.model == 'oled' else 80.0,
+            'power_limit_watts': oled_balanced_power,
+            'battery_usage': 'moderate',
+            'oled_optimized': self.hardware_profile and self.hardware_profile.model == 'oled'
         }
         
         # Gaming mode profile (background operation)

@@ -32,6 +32,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 from functools import wraps, lru_cache
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
 # Import our pure Python fallbacks
 from .pure_python_fallbacks import (
     AVAILABLE_DEPS, get_fallback_status, 
@@ -45,9 +48,6 @@ try:
 except ImportError:
     ENHANCED_INSTALLER_AVAILABLE = False
     logger.warning("Enhanced dependency installer not available")
-
-# Configure logging
-logger = logging.getLogger(__name__)
 
 # =============================================================================
 # DEPENDENCY CONFIGURATION
@@ -104,7 +104,7 @@ DEPENDENCY_SPECS = {
     'numpy': DependencySpec(
         name='numpy',
         version_min='1.20.0',
-        version_max='2.0.0',
+        version_max='3.0.0',  # Updated to support NumPy 2.x
         import_name='numpy',
         fallback_available=True,
         performance_impact=5.0,
@@ -116,7 +116,7 @@ DEPENDENCY_SPECS = {
     'scikit-learn': DependencySpec(
         name='scikit-learn',
         version_min='1.0.0',
-        version_max='2.0.0',
+        version_max='2.0.0',  # Compatible with sklearn 1.7.x
         import_name='sklearn',
         fallback_available=True,
         performance_impact=3.0,
@@ -143,7 +143,7 @@ DEPENDENCY_SPECS = {
     'numba': DependencySpec(
         name='numba',
         version_min='0.56.0',
-        version_max='1.0.0',
+        version_max='1.0.0',  # Compatible with numba 0.61.x
         import_name='numba',
         fallback_available=True,
         performance_impact=8.0,
@@ -156,7 +156,7 @@ DEPENDENCY_SPECS = {
     'numexpr': DependencySpec(
         name='numexpr',
         version_min='2.8.0',
-        version_max='3.0.0',
+        version_max='3.0.0',  # Compatible with numexpr 2.11.x
         import_name='numexpr',
         fallback_available=True,
         performance_impact=2.5,
@@ -242,6 +242,46 @@ DEPENDENCY_SPECS = {
         category='system',
         platform_specific=['linux'],
         test_function=lambda: hasattr(__import__('jeepney'), 'DBusAddress')
+    ),
+    
+    # Data validation and serialization
+    'pydantic': DependencySpec(
+        name='pydantic',
+        version_min='1.10.0',
+        version_max='3.0.0',
+        import_name='pydantic',
+        fallback_available=False,
+        performance_impact=1.5,
+        required=False,
+        category='validation',
+        test_function=lambda: hasattr(__import__('pydantic'), 'BaseModel')
+    ),
+    
+    # Async file operations
+    'aiofiles': DependencySpec(
+        name='aiofiles',
+        version_min='0.8.0',
+        version_max='24.0.0',
+        import_name='aiofiles',
+        fallback_available=True,
+        performance_impact=2.0,
+        required=False,
+        category='async',
+        test_function=lambda: hasattr(__import__('aiofiles'), 'open')
+    ),
+    
+    # System info
+    'distro': DependencySpec(
+        name='distro',
+        version_min='1.6.0',
+        version_max='2.0.0',
+        import_name='distro',
+        fallback_available=True,
+        performance_impact=1.0,
+        required=False,
+        category='system',
+        platform_specific=['linux'],
+        test_function=lambda: hasattr(__import__('distro'), 'name')
     ),
 }
 

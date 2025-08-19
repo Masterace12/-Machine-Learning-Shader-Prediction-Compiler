@@ -1,0 +1,19 @@
+{
+  "timestamp": 1755629883.7264574,
+  "test_duration_seconds": 0.02306079864501953,
+  "hardware_detection": {
+    "is_steam_deck": true,
+    "model": "oled",
+    "detection_method": "dmi_galileo",
+    "confidence": 0.95
+  },
+  "test_execution": {
+    "return_code": 1,
+    "success": false
+  },
+  "environment": {
+    "python_version": "3.13.1 (main, Dec  4 2024, 18:05:56) [GCC 14.2.1 20240910]",
+    "platform": "linux",
+    "cwd": "/home/deck/Downloads/-Machine-Learning-Shader-Prediction-Compiler"
+  }
+}
