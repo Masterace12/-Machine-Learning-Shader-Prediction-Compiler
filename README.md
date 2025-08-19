@@ -57,22 +57,32 @@ When you play games on Steam Deck, you experience:
 
 ## 📦 Installation
 
-### One-Command Installation
+### Recommended: Simple Installation Script
 
-**Simple, reliable installation for Steam Deck or any Linux system:**
+**For Steam Deck users experiencing permission issues:**
 
 ```bash
-# Download and run the latest installer
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
+# Clone or download the repository
+git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler.git
+cd -Machine-Learning-Shader-Prediction-Compiler
+
+# Run the simple installer (uses virtual environment - no permission issues)
+./scripts/install_simple.sh
 ```
 
-### Alternative: Download First, Then Run
+### Alternative: Advanced Installation
 
 ```bash
-# Download installer 
-wget https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh
-chmod +x install.sh
-./install.sh
+# For advanced users who want more control
+./scripts/install_fixed.sh --venv    # Use virtual environment (recommended)
+./scripts/install_fixed.sh --system  # System-wide installation (requires sudo)
+```
+
+### One-Line Download and Install
+
+```bash
+# Download and run the simple installer
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/scripts/install_simple.sh | bash
 ```
 
 **What it does:**
@@ -113,8 +123,11 @@ shader-predict-compile --help
 To update to the latest version:
 
 ```bash
-# Re-run the one-command installer
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
+# Re-run the simple installer
+./scripts/update_fixed.sh
+
+# Or download and run the latest
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/scripts/install_simple.sh | bash
 ```
 
 **The installer will:**
@@ -130,7 +143,11 @@ curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shade
 ### Simple Uninstallation
 
 ```bash
-./uninstall.sh
+# Run the uninstaller from your installation
+~/.local/share/shader-predict-compile/uninstall.sh
+
+# Or use the script
+./scripts/uninstall.sh
 ```
 
 **What it removes:**
@@ -140,6 +157,31 @@ curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shade
 - Configuration and cache files
 
 **Note:** Python packages installed by pip are left intact for safety.
+
+---
+
+## 📁 Project Structure
+
+```
+├── src/                          # Core ML prediction system
+│   ├── core/                     # Main ML components
+│   ├── monitoring/               # Performance monitoring
+│   ├── optimization/             # Thermal management
+│   └── thermal/                  # Temperature optimization
+├── scripts/                      # Installation and utility scripts
+│   ├── install_simple.sh         # Simple installer (recommended)
+│   ├── install_fixed.sh          # Advanced installer
+│   ├── update_fixed.sh           # Update script
+│   └── uninstall.sh              # Uninstaller
+├── config/                       # Steam Deck configurations
+│   ├── steamdeck_lcd_config.json # LCD model settings
+│   └── steamdeck_oled_config.json# OLED model settings
+├── tests/                        # Test suite
+├── docs/                         # Documentation
+├── examples/                     # Example scripts and utilities
+├── reports/                      # System analysis reports
+└── logs/                         # Log files and results
+```
 
 ---
 
@@ -195,14 +237,11 @@ systemctl --user stop shader-predict-compile.service
 
 **Permission denied errors:**
 ```bash
-# Use the one-command installer instead
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
+# Use the simple installer (virtual environment - no permission issues)
+./scripts/install_simple.sh
 
-# Or download to home directory
-cd ~
-wget https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh
-chmod +x install.sh
-./install.sh
+# Or download the fixed installer
+curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/scripts/install_simple.sh | bash
 ```
 
 **Installation fails:**
@@ -221,8 +260,11 @@ systemctl --user status shader-predict-compile.service
 
 **Still seeing "pure Python fallback" warnings:**
 ```bash
-# Use the latest installer - old versions show false warnings
-curl -fsSL https://raw.githubusercontent.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler/main/install.sh | bash
+# Use the latest installer - old versions show false warnings  
+./scripts/install_simple.sh
+
+# Check if ML libraries are properly installed
+shader-predict-status
 ```
 
 ### Getting Help

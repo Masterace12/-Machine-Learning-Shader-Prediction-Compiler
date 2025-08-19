@@ -85,3 +85,22 @@ shader_cache/
 # Reports and temporary files
 reports/*.json
 cleanup_report.json
+
+# Test results and validation
+test_results/
+validation_results/
+benchmark_results/
+profiling_data/
+thermal_logs/
+
+# Installation artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+
+# Local overrides
+local_config.json
+user_settings.json
+debug.log
