@@ -64,7 +64,7 @@ When you play games on Steam Deck, you experience:
 ```bash
 # Clone the repository to get the latest working version
 git clone https://github.com/Masterace12/-Machine-Learning-Shader-Prediction-Compiler.git
-cd -Machine-Learning-Shader-Prediction-Compiler
+cd ./-Machine-Learning-Shader-Prediction-Compiler
 ./install.sh
 ```
 
@@ -125,7 +125,7 @@ To update to the latest version:
 
 ```bash
 # Update the repository and re-run installer
-cd -Machine-Learning-Shader-Prediction-Compiler
+cd ./-Machine-Learning-Shader-Prediction-Compiler
 git pull origin main
 ./install.sh
 ```
