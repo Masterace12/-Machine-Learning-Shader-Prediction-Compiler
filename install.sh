@@ -72,6 +72,9 @@ fi
 if [ -f "requirements.txt" ]; then
     cp requirements.txt "$INSTALL_DIR/"
 fi
+if [ -f "setup_threading.py" ]; then
+    cp setup_threading.py "$INSTALL_DIR/"
+fi
 
 # Install MANDATORY ML dependencies
 echo -e "${YELLOW}📚 Installing MANDATORY ML dependencies...${NC}"
@@ -80,73 +83,129 @@ echo ""
 
 # Track installation failures
 FAILED_PACKAGES=""
+INSTALLED_PACKAGES=""
+ALREADY_INSTALLED=""
 
 install_required_package() {
     local package=$1
     local description=$2
+    local import_name=$3
     echo -n "Installing $description ($package)... "
     
-    # Try different installation methods for SteamOS compatibility
-    if $PYTHON_CMD -m pip install $USER_FLAG "$package" 2>/dev/null; then
-        echo -e "${GREEN}✅ SUCCESS${NC}"
-        return 0
-    elif $PYTHON_CMD -m pip install --break-system-packages "$package" 2>/dev/null; then
-        echo -e "${GREEN}✅ SUCCESS (system override)${NC}"
-        return 0
-    else
-        echo -e "${RED}❌ FAILED${NC}"
-        FAILED_PACKAGES="$FAILED_PACKAGES $package"
-        return 1
+    # First check if package is already working
+    if [ -n "$import_name" ]; then
+        if $PYTHON_CMD -c "import $import_name" 2>/dev/null; then
+            # Get version if possible
+            local version=""
+            version=$($PYTHON_CMD -c "import $import_name; print(getattr($import_name, '__version__', 'unknown'))" 2>/dev/null || echo "installed")
+            echo -e "${GREEN}✅ SUCCESS (already installed - $version)${NC}"
+            ALREADY_INSTALLED="$ALREADY_INSTALLED $package"
+            return 0
+        fi
     fi
+    
+    # Try installation with better error handling
+    local pip_output
+    local pip_exit_code
+    
+    # Try user installation first
+    pip_output=$($PYTHON_CMD -m pip install $USER_FLAG "$package" 2>&1)
+    pip_exit_code=$?
+    
+    # Check if installation was successful or package was already satisfied
+    if [ $pip_exit_code -eq 0 ] || echo "$pip_output" | grep -q "already satisfied\|Successfully installed"; then
+        echo -e "${GREEN}✅ SUCCESS${NC}"
+        INSTALLED_PACKAGES="$INSTALLED_PACKAGES $package"
+        return 0
+    fi
+    
+    # Try with system override for SteamOS
+    pip_output=$($PYTHON_CMD -m pip install --break-system-packages "$package" 2>&1)
+    pip_exit_code=$?
+    
+    if [ $pip_exit_code -eq 0 ] || echo "$pip_output" | grep -q "already satisfied\|Successfully installed"; then
+        echo -e "${GREEN}✅ SUCCESS (system override)${NC}"
+        INSTALLED_PACKAGES="$INSTALLED_PACKAGES $package"
+        return 0
+    fi
+    
+    # Final validation - check if import works even if pip reported issues
+    if [ -n "$import_name" ]; then
+        if $PYTHON_CMD -c "import $import_name" 2>/dev/null; then
+            local version=""
+            version=$($PYTHON_CMD -c "import $import_name; print(getattr($import_name, '__version__', 'unknown'))" 2>/dev/null || echo "working")
+            echo -e "${GREEN}✅ SUCCESS (import verified - $version)${NC}"
+            INSTALLED_PACKAGES="$INSTALLED_PACKAGES $package"
+            return 0
+        fi
+    fi
+    
+    # True failure - show error details
+    echo -e "${RED}❌ FAILED${NC}"
+    if [[ "$pip_output" != *"already satisfied"* ]]; then
+        echo -e "${YELLOW}   Error details: ${pip_output}${NC}"
+    fi
+    FAILED_PACKAGES="$FAILED_PACKAGES $package"
+    return 1
 }
 
 # Install MANDATORY core ML libraries
 echo "Core ML Libraries (REQUIRED):"
-install_required_package "numpy>=2.0.0" "NumPy (mathematical operations)"
-install_required_package "scikit-learn>=1.7.0" "scikit-learn (ML algorithms)"
-install_required_package "lightgbm>=4.0.0" "LightGBM (high-performance ML)"
+install_required_package "numpy>=2.0.0" "NumPy (mathematical operations)" "numpy"
+install_required_package "scikit-learn>=1.7.0" "scikit-learn (ML algorithms)" "sklearn"
+install_required_package "lightgbm>=4.0.0" "LightGBM (high-performance ML)" "lightgbm"
 
 echo ""
 echo "Performance Optimizations (REQUIRED):"
-install_required_package "numba>=0.60.0" "Numba (JIT compilation)"
-install_required_package "numexpr>=2.10.0" "NumExpr (fast numerical ops)"
-install_required_package "bottleneck>=1.3.0" "Bottleneck (optimized NumPy)"
-install_required_package "msgpack>=1.0.0" "MessagePack (fast serialization)"
-install_required_package "zstandard>=0.20.0" "Zstandard (high-performance compression)"
+install_required_package "numba>=0.60.0" "Numba (JIT compilation)" "numba"
+install_required_package "numexpr>=2.10.0" "NumExpr (fast numerical ops)" "numexpr"
+install_required_package "bottleneck>=1.3.0" "Bottleneck (optimized NumPy)" "bottleneck"
+install_required_package "msgpack>=1.0.0" "MessagePack (fast serialization)" "msgpack"
+install_required_package "zstandard>=0.20.0" "Zstandard (high-performance compression)" "zstandard"
 
 echo ""
 echo "System Integration (REQUIRED):"
-install_required_package "psutil>=5.8.0" "psutil (system monitoring)"
-install_required_package "requests>=2.25.0" "requests (HTTP library)"
+install_required_package "psutil>=5.8.0" "psutil (system monitoring)" "psutil"
+install_required_package "requests>=2.25.0" "requests (HTTP library)" "requests"
 
 # Linux-specific dependencies (REQUIRED on Linux)
 if [ "$(uname)" == "Linux" ]; then
     echo ""
     echo "Steam Deck Integration (REQUIRED on Linux):"
-    install_required_package "dbus-next>=0.2.0" "D-Bus interface (Steam integration)"
-    install_required_package "distro>=1.6.0" "Linux distribution detection"
+    install_required_package "dbus-next>=0.2.0" "D-Bus interface (Steam integration)" "dbus_next"
+    install_required_package "distro>=1.6.0" "Linux distribution detection" "distro"
 fi
 
 echo ""
 # Check for any failed installations
 if [ -n "$FAILED_PACKAGES" ]; then
-    echo -e "${RED}❌ INSTALLATION FAILED!${NC}"
-    echo -e "${RED}The following REQUIRED packages failed to install:${FAILED_PACKAGES}${NC}"
+    echo -e "${RED}❌ INSTALLATION ISSUES DETECTED!${NC}"
+    echo -e "${RED}The following packages had installation issues:${FAILED_PACKAGES}${NC}"
     echo ""
-    echo -e "${YELLOW}To fix this issue:${NC}"
-    echo "1. Try running with sudo (may be required on some systems):"
+    echo -e "${YELLOW}Troubleshooting options:${NC}"
+    echo "1. Try running with elevated privileges:"
     echo "   sudo ./install.sh"
     echo ""
-    echo "2. Or install manually:"
+    echo "2. Manual installation:"
     echo "   pip install --break-system-packages numpy scikit-learn lightgbm numba"
     echo ""
-    echo "3. On Steam Deck, you may need to disable read-only mode:"
+    echo "3. On Steam Deck, disable read-only mode temporarily:"
     echo "   sudo steamos-readonly disable"
+    echo "   ./install.sh"
+    echo "   sudo steamos-readonly enable"
     echo ""
     echo -e "${RED}ML libraries are MANDATORY - the system cannot operate without them.${NC}"
     exit 1
 else
-    echo -e "${GREEN}✅ All MANDATORY ML dependencies installed successfully!${NC}"
+    echo -e "${GREEN}✅ All MANDATORY ML dependencies are ready!${NC}"
+    
+    # Show installation summary
+    if [ -n "$ALREADY_INSTALLED" ]; then
+        echo -e "${BLUE}📦 Packages already installed:${ALREADY_INSTALLED}${NC}"
+    fi
+    if [ -n "$INSTALLED_PACKAGES" ]; then
+        echo -e "${GREEN}📦 Packages newly installed:${INSTALLED_PACKAGES}${NC}"
+    fi
 fi
 
 # Create executable commands
